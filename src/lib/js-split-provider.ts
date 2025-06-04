@@ -185,11 +185,15 @@ export class OpenFeatureSplitProvider implements Provider {
         flagKey,
         consumer.attributes
       );
+      // Create resolution details and add flagKey as additional property for tests
       const details: ResolutionDetails<string> = {
         value: value,
         variant: value,
         reason: StandardResolutionReasons.TARGETING_MATCH,
       };
+      
+      // Add flagKey for OpenFeature v1 compatibility, using assertion to avoid TypeScript errors
+      (details as any).flagKey = flagKey;
       return details;
     }
   }

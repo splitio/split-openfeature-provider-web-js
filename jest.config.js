@@ -1,7 +1,7 @@
 module.exports = {
   displayName: 'openfeature-web-split-provider',
   testEnvironment: 'jsdom',
-  testMatch: ['**/web.spec.js'],
+  testMatch: ['**/web.spec.js', '**/integration/*.test.js', '**/*-unit.test.js'],
   globals: {
     'ts-jest': {
       tsconfig: '<rootDir>/tsconfig.json',
