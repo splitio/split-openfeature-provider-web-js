@@ -99,20 +99,12 @@ export class OpenFeatureSplitProvider implements Provider {
     let value: boolean;
     switch (details.value as unknown) {
       case "on":
-        value = true;
-        break;
-      case "off":
-        value = false;
-        break;
       case "true":
-        value = true;
-        break;
-      case "false":
-        value = false;
-        break;
       case true:
         value = true;
         break;
+      case "off":
+      case "false":
       case false:
         value = false;
         break;
