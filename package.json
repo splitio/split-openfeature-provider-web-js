@@ -1,7 +1,7 @@
 {
-  "name": "@splitsoftware/openfeature-js-split-provider",
-  "version": "1.1.0",
-  "description": "Split OpenFeature Provider",
+  "name": "@splitsoftware/openfeature-web-split-provider",
+  "version": "1.0.0",
+  "description": "Split OpenFeature Web Provider",
   "files": [
     "README.md",
     "CONTRIBUTORS-GUIDE.md",
@@ -12,33 +12,32 @@
     "es",
     "src"
   ],
-  "repository": "splitio/openfeature-split-provider-js",
-  "homepage": "https://github.com/splitio/openfeature-split-provider-js#readme",
-  "bugs": "https://github.com/splitio/openfeature-split-provider-js/issues",
+  "repository": "splitio/split-openfeature-provider-web-js",
+  "homepage": "https://github.com/splitio/split-openfeature-provider-web-js#readme",
+  "bugs": "https://github.com/splitio/split-openfeature-provider-web-js/issues",
   "license": "Apache-2.0",
   "author": "Josh Sirota <josh.sirota@split.io>",
-  "main": "src/index.ts",
-  "types": "types",
+  "main": "lib/index.js",
+  "module": "es/index.js",
+  "browser": "lib/index.js",
+  "types": "types/index.d.ts",
   "engines": {
-    "npm": ">=3",
-    "node": ">=6"
+    "npm": ">=3"
   },
-  "dependencies": {},
   "peerDependencies": {
-    "@openfeature/server-sdk": "^1.18.0",
+    "@openfeature/web-sdk": "^1.0.0",
     "@splitsoftware/splitio": "^11.4.0"
   },
   "devDependencies": {
-    "@openfeature/server-sdk": "^1.18.0",
+    "@openfeature/web-sdk": "^1.0.0",
     "@splitsoftware/splitio": "^11.4.0",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "replace": "^1.2.1",
     "rimraf": "^3.0.2",
-    "tap-min": "^2.0.0",
-    "tape": "4.13.2",
-    "tape-catch": "1.0.6",
-    "ts-node": "^10.5.0",
+    "ts-jest": "^29.3.4",
     "typescript": "^4.9.5"
   },
   "scripts": {
@@ -48,11 +47,11 @@
     "postbuild-cjs": "cross-env NODE_ENV=cjs node scripts/copy.packages.json.js && ./scripts/build_cjs_replace_imports.sh",
     "build": "rimraf lib es && npm run build-cjs && npm run build-esm",
     "check": "npm run check:version",
-    "check:version": "cross-env NODE_ENV=test tape -r ./ts-node.register src/settings/__tests__/defaults.spec.js",
+    "check:version": "cross-env NODE_ENV=test jest --testPathIgnorePatterns=node_modules/ -c jest.config.js src/settings/__tests__/defaults.spec.js",
     "pretest-ts-decls": "npm run build-esm && npm run build-cjs && npm link",
     "test-ts-decls": "./scripts/ts-tests.sh",
     "posttest-ts-decls": "npm unlink && npm install",
-    "test": "cross-env NODE_ENV=test tape -r ./ts-node.register src/__tests__/node.spec.js | tap-min",
+    "test": "jest --testPathIgnorePatterns=node_modules/ -c jest.config.js",
     "publish:rc": "npm run check && npm run build && npm publish --tag canary",
     "publish:stable": "npm run check && npm run build && npm publish"
   },
