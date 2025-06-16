@@ -31,57 +31,30 @@ export class OpenFeatureSplitProvider implements Provider {
 
   constructor(options: SplitProviderOptions) {
     this.client = options.splitClient;
-    
+
     // Create initialization promise
     this.initialized = new Promise<void>((resolve) => {
-      // Check if we can access the ready() method safely
-      try {
-        // If client is ready, resolve immediately
-        if (this.isClientReady()) {
-          console.log(`${this.metadata.name} provider initialized`);
-          resolve();
-          return;
-        }
-        
-        // Otherwise set up event listener for SDK_READY
-        const onSdkReady = () => {
-          console.log(`${this.metadata.name} provider initialized`);
-          resolve();
-        };
-        
-        // Bind to SDK_READY event
-        // Handle web SDK event mechanism - use addListener which exists in web SDK
-        if (typeof this.client.addListener === 'function') {
-          // Use correct typing for web SDK's addListener 
-          try {
-            // @ts-ignore - Ignore type checking here as we're handling web SDK dynamically
-            this.client.addListener({ event: 'SDK_READY', handler: onSdkReady });
-          } catch (e) {
-            console.warn(`${this.metadata.name} provider: Error adding listener`, e);
-          }
-        } else if (typeof this.client.on === 'function') {
-          this.client.on('SDK_READY', onSdkReady);
-        } else {
-          // If no event mechanism is available, just resolve
-          console.warn(`${this.metadata.name} provider: No event mechanism available`);
-          resolve();
-        }
-      } catch (e) {
-        // In case of any issues, resolve the promise to prevent hanging
-        console.warn(`${this.metadata.name} provider initialization error: ${e}`);
+
+      const onSdkReady = () => {
+        console.log(`${this.metadata.name} provider initialized`);
         resolve();
+      };
+
+      // If client is ready, resolve immediately
+      if (this.isClientReady()) {
+        onSdkReady();
+      } else {
+        this.client.on(this.client.Event.SDK_READY, onSdkReady);
       }
+    }).catch((e) => {
+      // In case of any issues, resolve the promise to prevent hanging
+      console.warn(`${this.metadata.name} provider initialization error: ${e}`);
     });
   }
   
   // Safe method to check if client is ready
   private isClientReady(): boolean {
-    try {
-      // Make sure ready is a function and call it to get the boolean result
-      return typeof this.client.ready === 'function' && Boolean(this.client.ready());
-    } catch (e) {
-      return false;
-    }
+    return (this.client as any).__getStatus().isReady;
   }
 
   resolveBooleanEvaluation(
