@@ -10,6 +10,8 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     mockSplitClient = {
       // Add ready method needed by provider
       ready: jest.fn(() => true),
+      __getStatus: () => ({isReady: true}),
+      
       // Add event support
       on: jest.fn((event, callback) => {
         if (event === 'SDK_READY') {
@@ -22,7 +24,7 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
       Event: { SDK_READY: 'SDK_READY' },
       
       // Mock the treatments
-      getTreatment: jest.fn((_key, flagKey, _attributes) => {
+      getTreatment: jest.fn((flagKey, _attributes) => {
         // Return specific values for our test cases
         if (flagKey === 'boolean-flag') return 'on';
         if (flagKey === 'boolean-flag-off') return 'off';
@@ -54,7 +56,6 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     expect(result.value).toBe(true);
     expect(result.variant).toBe('on');
     expect(mockSplitClient.getTreatment).toHaveBeenCalledWith(
-      'user-key',
       'boolean-flag',
       {}
     );
