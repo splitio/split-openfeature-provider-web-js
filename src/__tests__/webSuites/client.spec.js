@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { OpenFeature } from '@openfeature/web-sdk';
-import { SplitFactory } from '@splitsoftware/splitio';
+import { SplitFactory } from '@splitsoftware/splitio-browserjs';
 import { OpenFeatureSplitProvider } from '../..';
 
 // Mock Split features for browser testing
@@ -20,7 +21,7 @@ const mockFeatures = {
 };
 
 // Mock SplitIO SDK - Web version
-jest.mock('@splitsoftware/splitio', () => {
+jest.mock('@splitsoftware/splitio-browserjs', () => {
   const MockSplitClient = {
     // Add ready method for web SDK
     ready: jest.fn(() => true),
@@ -79,17 +80,17 @@ jest.mock('@openfeature/web-sdk', () => {
       return defaultValue;
     }),
     
-    getStringValue: jest.fn(async (flagKey, defaultValue, context = {}) => {
+    getStringValue: jest.fn(async (flagKey, defaultValue, _context = {}) => {
       if (flagKey === 'some_other_feature') return 'off';
       return defaultValue;
     }),
     
-    getNumberValue: jest.fn(async (flagKey, defaultValue, context = {}) => {
+    getNumberValue: jest.fn(async (flagKey, defaultValue, _context = {}) => {
       if (flagKey === 'int_feature') return 32;
       return defaultValue;
     }),
     
-    getObjectValue: jest.fn(async (flagKey, defaultValue, context = {}) => {
+    getObjectValue: jest.fn(async (flagKey, defaultValue, _context = {}) => {
       if (flagKey === 'obj_feature') return { key: 'value' };
       return defaultValue;
     }),
@@ -124,14 +125,14 @@ jest.mock('@openfeature/web-sdk', () => {
       return { flagKey, value: defaultValue, variant: defaultValue.toString() };
     }),
     
-    getStringDetails: jest.fn(async (flagKey, defaultValue, context = {}) => {
+    getStringDetails: jest.fn(async (flagKey, defaultValue, _context = {}) => {
       if (flagKey === 'some_other_feature') {
         return { flagKey, value: 'off', variant: 'off', reason: 'TARGETING_MATCH' };
       }
       return { flagKey, value: defaultValue, variant: defaultValue };
     }),
     
-    getNumberDetails: jest.fn(async (flagKey, defaultValue, context = {}) => {
+    getNumberDetails: jest.fn(async (flagKey, defaultValue, _context = {}) => {
       if (flagKey === 'int_feature') {
         return { flagKey, value: 32, variant: '32', reason: 'TARGETING_MATCH' };
       }
@@ -141,7 +142,7 @@ jest.mock('@openfeature/web-sdk', () => {
       return { flagKey, value: defaultValue, variant: defaultValue.toString() };
     }),
     
-    getObjectDetails: jest.fn(async (flagKey, defaultValue, context = {}) => {
+    getObjectDetails: jest.fn(async (flagKey, defaultValue, _context = {}) => {
       if (flagKey === 'obj_feature') {
         return { flagKey, value: { key: 'value' }, variant: '{"key": "value"}', reason: 'TARGETING_MATCH' };
       }
@@ -306,8 +307,7 @@ export default async function() {
     core: {
       authorizationKey: 'localhost'
     },
-    features: './split.yaml',
-    debug: 'DEBUG'
+    features: mockFeatures,
   }).client();
 
   let provider = new OpenFeatureSplitProvider({splitClient});

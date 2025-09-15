@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   EvaluationContext,
   Provider,
@@ -8,11 +10,13 @@ import {
   TargetingKeyMissingError,
   StandardResolutionReasons,
   Logger,
+  ProviderEvents,
+  OpenFeature,
 } from "@openfeature/web-sdk";
 import type SplitIO from "@splitsoftware/splitio/types/splitio";
 
 export interface SplitProviderOptions {
-  splitClient: SplitIO.IClient;
+  splitClient: SplitIO.IBrowserClient;
 }
 
 type Consumer = {
@@ -27,7 +31,7 @@ export class OpenFeatureSplitProvider implements Provider {
     name: "split",
   };
   private initialized: Promise<void>;
-  private client: SplitIO.IClient;
+  private client: SplitIO.IBrowserClient;
 
   constructor(options: SplitProviderOptions) {
     this.client = options.splitClient;
@@ -61,7 +65,7 @@ export class OpenFeatureSplitProvider implements Provider {
     flagKey: string,
     defaultValue: boolean,
     context: EvaluationContext,
-    logger: Logger
+    _logger: Logger
   ): ResolutionDetails<boolean> {
     const details = this.evaluateTreatment(
       flagKey,
@@ -93,7 +97,7 @@ export class OpenFeatureSplitProvider implements Provider {
     flagKey: string,
     defaultValue: string,
     context: EvaluationContext,
-    logger: Logger
+    _logger: Logger
   ): ResolutionDetails<string> {
     const details = this.evaluateTreatment(
       flagKey,
@@ -110,7 +114,7 @@ export class OpenFeatureSplitProvider implements Provider {
     flagKey: string,
     defaultValue: number,
     context: EvaluationContext,
-    logger: Logger
+    _logger: Logger
   ): ResolutionDetails<number> {
     const details = this.evaluateTreatment(
       flagKey,
@@ -124,7 +128,7 @@ export class OpenFeatureSplitProvider implements Provider {
     flagKey: string,
     defaultValue: U,
     context: EvaluationContext,
-    logger: Logger
+    _logger: Logger
   ): ResolutionDetails<U> {
     const details = this.evaluateTreatment(
       flagKey,
@@ -154,7 +158,6 @@ export class OpenFeatureSplitProvider implements Provider {
         };
       }
       const value = this.client.getTreatment(
-        consumer.key,
         flagKey,
         consumer.attributes
       );

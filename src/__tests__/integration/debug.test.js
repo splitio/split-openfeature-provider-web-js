@@ -1,5 +1,5 @@
 import { OpenFeature } from '@openfeature/web-sdk';
-import { SplitFactory } from '@splitsoftware/splitio';
+import { SplitFactory } from '@splitsoftware/splitio-browserjs';
 import { OpenFeatureSplitProvider } from '../../lib/js-split-provider';
 
 describe('OpenFeature Split Provider - Debug Tests', () => {
@@ -11,8 +11,6 @@ describe('OpenFeature Split Provider - Debug Tests', () => {
     splitClient = SplitFactory({
       core: {
         authorizationKey: 'localhost',
-        // Add key to make it clear we're evaluating correctly
-        key: 'test-user'
       },
       // Define the features directly
       features: {
@@ -26,11 +24,11 @@ describe('OpenFeature Split Provider - Debug Tests', () => {
     
     // Add direct Split client test to verify it works as expected
     console.log('Direct Split client test:');
-    console.log('- my_feature:', splitClient.getTreatment('test-user', 'my_feature'));
-    console.log('- some_other_feature:', splitClient.getTreatment('test-user', 'some_other_feature'));
-    console.log('- int_feature:', splitClient.getTreatment('test-user', 'int_feature'));
-    console.log('- obj_feature:', splitClient.getTreatment('test-user', 'obj_feature'));
-
+    console.log('- my_feature:', splitClient.getTreatment('my_feature'));
+    console.log('- some_other_feature:', splitClient.getTreatment('some_other_feature'));
+    console.log('- int_feature:', splitClient.getTreatment('int_feature'));
+    console.log('- obj_feature:', splitClient.getTreatment('obj_feature'));
+    
     // Create provider
     const provider = new OpenFeatureSplitProvider({
       splitClient
@@ -77,7 +75,7 @@ describe('OpenFeature Split Provider - Debug Tests', () => {
 
   // Basic test to validate Split direct API
   test('Split client works directly', () => {
-    const treatment = splitClient.getTreatment('test-user', 'my_feature');
+    const treatment = splitClient.getTreatment('my_feature');
     expect(treatment).toBe('on');
   });
 });

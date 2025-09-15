@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { OpenFeatureSplitProvider } from '../lib/js-split-provider';
 
 describe('OpenFeatureSplitProvider Unit Tests', () => {
@@ -21,7 +22,7 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
       Event: { SDK_READY: 'SDK_READY' },
       
       // Mock the treatments
-      getTreatment: jest.fn((key, flagKey, attributes) => {
+      getTreatment: jest.fn((_key, flagKey, _attributes) => {
         // Return specific values for our test cases
         if (flagKey === 'boolean-flag') return 'on';
         if (flagKey === 'boolean-flag-off') return 'off';
