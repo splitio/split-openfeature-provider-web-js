@@ -25,6 +25,7 @@ jest.mock('@splitsoftware/splitio-browserjs', () => {
   const MockSplitClient = {
     // Add ready method for web SDK
     ready: jest.fn(() => true),
+    __getStatus: () => ({isReady: true}),
     // Add event registration compatible with web SDK
     addListener: jest.fn(({ event, handler }) => {
       if (event === 'SDK_READY') {
