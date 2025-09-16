@@ -5,7 +5,7 @@ import { OpenFeatureSplitProvider } from '../../lib/js-split-provider';
 describe('OpenFeature Split Provider - Working Integration Test', () => {
   let client;
   let provider;
-  let options;
+  let splitClient;
 
   // Properly define the split treatments for localhost mode
   const localFeatures = {
@@ -21,15 +21,15 @@ describe('OpenFeature Split Provider - Working Integration Test', () => {
 
   beforeEach(async () => {
     // Create client
-    const splitClient = SplitFactory({
+    const splitFactory = SplitFactory({
       core: {
         authorizationKey: 'localhost'
       },
       features: localFeatures
-    }).client();
+    })
+    splitClient = splitFactory.client();
 
-    options = {splitClient}
-    provider = new OpenFeatureSplitProvider(options);
+    provider = new OpenFeatureSplitProvider(splitFactory);
     
     OpenFeature.setProvider(provider);
     OpenFeature.setContext({targetingKey: 'user1'})
@@ -38,7 +38,7 @@ describe('OpenFeature Split Provider - Working Integration Test', () => {
   });
 
   afterEach(async () => {
-    await options.splitClient.destroy();
+    await splitClient.destroy();
   });
 
   test('boolean treatment evaluations', async () => {

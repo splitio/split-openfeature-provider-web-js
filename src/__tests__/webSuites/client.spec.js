@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { OpenFeature } from '@openfeature/web-sdk';
+import { OpenFeature, OpenFeatureEventEmitter, ProviderEvents } from '@openfeature/web-sdk';
 import { SplitFactory } from '@splitsoftware/splitio-browserjs';
 import { OpenFeatureSplitProvider } from '../..';
 
@@ -26,6 +26,10 @@ jest.mock('@splitsoftware/splitio-browserjs', () => {
     // Add ready method for web SDK
     ready: jest.fn(() => true),
     __getStatus: () => ({isReady: true}),
+    Event: {
+      'SDK_UPDATE': 'SDK_UPDATE'
+    },
+    on: () => {},
     // Add event registration compatible with web SDK
     addListener: jest.fn(({ event, handler }) => {
       if (event === 'SDK_READY') {
@@ -155,6 +159,12 @@ jest.mock('@openfeature/web-sdk', () => {
   };
 
   return {
+    OpenFeatureEventEmitter: () => ({
+      emit: () => {}
+    }),
+    ProviderEvents: {
+      Ready: 'ready'
+    },
     OpenFeature: {
       setProvider: jest.fn(),
       getClient: jest.fn(() => mockClient)
@@ -304,14 +314,15 @@ export default async function() {
   };
 
   // Configure Split client for web environment
-  let splitClient = SplitFactory({
+  let splitFactory = SplitFactory({
     core: {
       authorizationKey: 'localhost'
     },
     features: mockFeatures,
-  }).client();
+  });
+  let splitClient = splitFactory.client();
 
-  let provider = new OpenFeatureSplitProvider({splitClient});
+  let provider = new OpenFeatureSplitProvider(splitFactory);
   OpenFeature.setProvider(provider);
 
   let client = OpenFeature.getClient('test');

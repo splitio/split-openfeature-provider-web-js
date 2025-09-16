@@ -8,7 +8,7 @@ describe('OpenFeature Split Provider - Debug Tests', () => {
 
   beforeAll(async () => {
     // Create with more debug options
-    splitClient = SplitFactory({
+    const splitFactory = SplitFactory({
       core: {
         authorizationKey: 'localhost',
       },
@@ -20,7 +20,8 @@ describe('OpenFeature Split Provider - Debug Tests', () => {
         'obj_feature': '{"key": "value"}'
       },
       debug: true
-    }).client();
+    })
+    splitClient =splitFactory.client();
     
     // Add direct Split client test to verify it works as expected
     console.log('Direct Split client test:');
@@ -30,9 +31,7 @@ describe('OpenFeature Split Provider - Debug Tests', () => {
     console.log('- obj_feature:', splitClient.getTreatment('obj_feature'));
     
     // Create provider
-    const provider = new OpenFeatureSplitProvider({
-      splitClient
-    });
+    const provider = new OpenFeatureSplitProvider(splitFactory);
 
     // Register provider
     OpenFeature.setProvider(provider);

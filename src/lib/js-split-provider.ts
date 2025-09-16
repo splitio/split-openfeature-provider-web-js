@@ -12,12 +12,9 @@ import {
   Logger,
   ProviderEvents,
   OpenFeature,
+  OpenFeatureEventEmitter,
 } from "@openfeature/web-sdk";
 import type SplitIO from "@splitsoftware/splitio/types/splitio";
-
-export interface SplitProviderOptions {
-  splitClient: SplitIO.IBrowserClient;
-}
 
 type Consumer = {
   key: string | undefined;
@@ -30,32 +27,28 @@ export class OpenFeatureSplitProvider implements Provider {
   metadata = {
     name: "split",
   };
-  private initialized: Promise<void>;
   private client: SplitIO.IBrowserClient;
+  public readonly events = new OpenFeatureEventEmitter();
 
-  constructor(options: SplitProviderOptions) {
-    this.client = options.splitClient;
-
-    // Create initialization promise
-    this.initialized = new Promise<void>((resolve) => {
-
-      const onSdkReady = () => {
-        console.log(`${this.metadata.name} provider initialized`);
-        resolve();
-      };
-
-      // If client is ready, resolve immediately
-      if (this.isClientReady()) {
-        onSdkReady();
-      } else {
-        this.client.on(this.client.Event.SDK_READY, onSdkReady);
-      }
-    }).catch((e) => {
-      // In case of any issues, resolve the promise to prevent hanging
-      console.warn(`${this.metadata.name} provider initialization error: ${e}`);
+  constructor(splitFactory: SplitIO.IBrowserSDK) {
+    this.client = splitFactory.client();
+    this.client.on(this.client.Event.SDK_UPDATE, () => {
+      this.events.emit(ProviderEvents.ConfigurationChanged)
     });
+
+    const onSdkReady = () => {
+      console.log(`${this.metadata.name} provider initialized`);
+      this.events.emit(ProviderEvents.Ready)
+    };
+
+    // If client is ready, resolve immediately
+    if (this.isClientReady()) {
+      onSdkReady();
+    } else {
+      this.client.on(this.client.Event.SDK_READY, onSdkReady);
+    }
   }
-  
+
   // Safe method to check if client is ready
   private isClientReady(): boolean {
     return (this.client as any).__getStatus().isReady;

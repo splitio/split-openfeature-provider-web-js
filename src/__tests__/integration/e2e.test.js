@@ -12,7 +12,7 @@ describe('OpenFeature Split Provider - E2E Integration Tests', () => {
   // Set up before all tests
   beforeAll(async () => {
     // Initialize the Split client in localhost mode
-    splitClient = SplitFactory({
+    const splitFactory = SplitFactory({
       core: {
         authorizationKey: 'localhost'
       },
@@ -32,7 +32,8 @@ describe('OpenFeature Split Provider - E2E Integration Tests', () => {
           treatment: '{"key": "value"}'
         }
       }
-    }).client();
+    })
+    splitClient = splitFactory.client();
 
     // Wait for the client to be ready
     await new Promise((resolve) => {
@@ -55,9 +56,7 @@ describe('OpenFeature Split Provider - E2E Integration Tests', () => {
     });
 
     // Create the Split provider with the real Split client
-    const provider = new OpenFeatureSplitProvider({
-      splitClient
-    });
+    const provider = new OpenFeatureSplitProvider(splitFactory);
 
     // Register the provider with OpenFeature
     OpenFeature.setProvider(provider);

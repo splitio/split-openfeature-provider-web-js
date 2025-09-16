@@ -36,9 +36,7 @@ describe('OpenFeature Split Provider - Mock Integration Tests', () => {
     };
 
     // Create the provider with our mock Split client
-    provider = new OpenFeatureSplitProvider({
-      splitClient: mockSplitClient
-    });
+    provider = new OpenFeatureSplitProvider({ client: () => mockSplitClient});
 
     // Register with OpenFeature
     OpenFeature.setProviderAndWait(provider);
