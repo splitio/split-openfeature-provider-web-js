@@ -41,7 +41,7 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     
     // Create the provider with our mock client
     provider = new OpenFeatureSplitProvider({
-      splitClient: mockSplitClient
+      client: () => mockSplitClient
     });
   });
   

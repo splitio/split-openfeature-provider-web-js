@@ -1,6 +1,6 @@
 {
   "name": "@splitsoftware/openfeature-web-split-provider",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "description": "Split OpenFeature Web Provider",
   "files": [
     "README.md",
@@ -17,6 +17,12 @@
   "bugs": "https://github.com/splitio/split-openfeature-provider-web-js/issues",
   "license": "Apache-2.0",
   "author": "Josh Sirota <josh.sirota@split.io>",
+  "contributors": [
+    "Nicolas Zelaya <nicolas.zelaya@harness.io> (https://github.com/NicoZelaya)",
+    "Emiliano Sanchez <emiliano.sanchez@harness.io> (https://github.com/EmilianoSanchez)",
+    "Emmanuel Zamora <emmanuel.zamora@harness.io> (https://github.com/ZamoraEmmanuel)",
+    "SDK Team <sdks@harness.io>"
+  ],
   "main": "lib/index.js",
   "module": "es/index.js",
   "browser": "lib/index.js",
