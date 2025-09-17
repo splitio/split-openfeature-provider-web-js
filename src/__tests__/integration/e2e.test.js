@@ -1,7 +1,6 @@
 import { OpenFeature } from '@openfeature/web-sdk';
-import { SplitFactory } from '@splitsoftware/splitio';
+import { SplitFactory } from '@splitsoftware/splitio-browserjs';
 import { OpenFeatureSplitProvider } from '../../lib/js-split-provider';
-import path from 'path';
 
 // This is an end-to-end integration test that uses real clients (no mocks)
 // It uses a local split.yaml file for feature flag definitions
@@ -17,7 +16,22 @@ describe('OpenFeature Split Provider - E2E Integration Tests', () => {
       core: {
         authorizationKey: 'localhost'
       },
-      features: path.join(__dirname, 'split.yaml')
+      features: {
+        // Define features with proper structure
+        my_feature: {
+          treatment: 'on',
+          config: '{"desc": "this is a test"}'
+        },
+        some_other_feature: {
+          treatment: 'off'
+        },
+        int_feature: {
+          treatment: '32'
+        },
+        obj_feature: {
+          treatment: '{"key": "value"}'
+        }
+      }
     }).client();
 
     // Wait for the client to be ready
