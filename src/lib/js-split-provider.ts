@@ -11,7 +11,6 @@ import {
   StandardResolutionReasons,
   Logger,
   ProviderEvents,
-  OpenFeature,
   OpenFeatureEventEmitter,
 } from "@openfeature/web-sdk";
 import type SplitIO from "@splitsoftware/splitio/types/splitio";
@@ -22,6 +21,7 @@ type Consumer = {
 };
 
 const CONTROL_VALUE_ERROR_MESSAGE = "Received the 'control' value from Split.";
+const CONTROL_TREATMENT = 'control';
 
 export class OpenFeatureSplitProvider implements Provider {
   metadata = {
@@ -41,130 +41,117 @@ export class OpenFeatureSplitProvider implements Provider {
       this.events.emit(ProviderEvents.Ready)
     };
 
-    // If client is ready, resolve immediately
-    if (this.isClientReady()) {
-      onSdkReady();
-    } else {
-      this.client.on(this.client.Event.SDK_READY, onSdkReady);
-    }
-  }
+    const onSdkTimedOut = () => {
+      console.log(`${this.metadata.name} provider couldn't initialize`);
+      this.events.emit(ProviderEvents.Error);
+    };
 
-  // Safe method to check if client is ready
-  private isClientReady(): boolean {
-    return (this.client as any).__getStatus().isReady;
+    const clientStatus = (this.client as any).__getStatus();
+    if (clientStatus.isReady) {
+      onSdkReady();
+      return;
+    } 
+    if (clientStatus.hasTimedout || clientStatus.isTimedOut) {
+      onSdkTimedOut();
+      return;
+    }
+    this.client.on(this.client.Event.SDK_READY, onSdkReady);
+    this.client.on(this.client.Event.SDK_READY_TIMED_OUT, onSdkTimedOut);
   }
 
   resolveBooleanEvaluation(
     flagKey: string,
-    defaultValue: boolean,
+    _: boolean,
     context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<boolean> {
     const details = this.evaluateTreatment(
       flagKey,
       this.transformContext(context),
-      defaultValue.toString()
     );
 
-    let value: boolean;
-    switch (details.value as unknown) {
-      case "on":
-      case "true":
-      case true:
-        value = true;
-        break;
-      case "off":
-      case "false":
-      case false:
-        value = false;
-        break;
-      case "control":
-        throw new FlagNotFoundError(CONTROL_VALUE_ERROR_MESSAGE);
-      default:
-        throw new ParseError(`Invalid boolean value for ${details.value}`);
+    const treatment = details.value.toLowerCase();
+
+    if ( treatment === 'on' || treatment === 'true' ) {
+      return { ...details, value: true };
     }
-    return { ...details, value };
+
+    if ( treatment === 'off' || treatment === 'false' ) {
+      return { ...details, value: false };
+    }
+
+    throw new ParseError(`Invalid boolean value for ${treatment}`);
   }
 
   resolveStringEvaluation(
     flagKey: string,
-    defaultValue: string,
+    _: string,
     context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<string> {
     const details = this.evaluateTreatment(
       flagKey,
       this.transformContext(context),
-      defaultValue
     );
-    if (details.value === "control") {
-      throw new FlagNotFoundError(CONTROL_VALUE_ERROR_MESSAGE);
-    }
     return details;
   }
 
   resolveNumberEvaluation(
     flagKey: string,
-    defaultValue: number,
+    _: number,
     context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<number> {
     const details = this.evaluateTreatment(
       flagKey,
       this.transformContext(context),
-      defaultValue.toString()
     );
     return { ...details, value: this.parseValidNumber(details.value) };
   }
 
   resolveObjectEvaluation<U extends JsonValue>(
     flagKey: string,
-    defaultValue: U,
+    _: U,
     context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<U> {
     const details = this.evaluateTreatment(
       flagKey,
-      this.transformContext(context),
-      JSON.stringify(defaultValue)
+      this.transformContext(context)
     );
     return { ...details, value: this.parseValidJsonObject(details.value) };
   }
 
   private evaluateTreatment(
     flagKey: string,
-    consumer: Consumer,
-    defaultValue: string
+    consumer: Consumer
   ): ResolutionDetails<string> {
     if (!consumer.key) {
       throw new TargetingKeyMissingError(
-        "The Split provider requires a targeting key."
+        'The Split provider requires a targeting key.'
       );
-    } else {
-      // The SDK should be ready by now, but if not, return default value
-      // Use our isClientReady helper to safely check
-      if (!this.isClientReady()) {
-        return {
-          value: defaultValue,
-          variant: defaultValue,
-          reason: StandardResolutionReasons.DEFAULT
-        };
-      }
-      const value = this.client.getTreatment(
-        flagKey,
-        consumer.attributes
-      );
-      // Create resolution details and add flagKey as additional property for tests
-      const details: ResolutionDetails<string> = {
-        value: value,
-        variant: value,
-        reason: StandardResolutionReasons.TARGETING_MATCH,
-      };
-      
-      // Add flagKey for OpenFeature v1 compatibility, using assertion to avoid TypeScript errors
-      (details as any).flagKey = flagKey;
-      return details;
     }
+    if (flagKey == null || flagKey === '') {
+      throw new FlagNotFoundError(
+        'flagKey must be a non-empty string'
+      );
+    }
+    const { treatment: value, config }: SplitIO.TreatmentWithConfig = this.client.getTreatmentWithConfig(
+      flagKey,
+      consumer.attributes
+    );
+
+    if (value === CONTROL_TREATMENT) {
+      throw new FlagNotFoundError(CONTROL_VALUE_ERROR_MESSAGE);
+    }
+    const flagMetadata = { config: config ? config : '' };
+    const details: ResolutionDetails<string> = {
+      value: value,
+      variant: value,
+      flagMetadata: flagMetadata,
+      reason: StandardResolutionReasons.TARGETING_MATCH,
+    };
+    return details;
   }
 
   //Transform the context into an object useful for the Split API, an key string with arbitrary Split "Attributes".
@@ -185,6 +172,7 @@ export class OpenFeatureSplitProvider implements Provider {
     if (Number.isNaN(result)) {
       throw new ParseError(`Invalid numeric value ${stringValue}`);
     }
+    console.log(result)
     return result;
   }
 

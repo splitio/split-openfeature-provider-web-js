@@ -48,6 +48,14 @@ describe('OpenFeature Split Provider - Working Integration Test', () => {
     expect(result).toBe(true);
   });
 
+  test('boolean treatment details evaluations', async () => {
+    
+    // Test the boolean value evaluation
+    const result = await client.getBooleanDetails('my_feature', false);
+    expect(result.value).toBe(true);
+    expect(result.flagMetadata.config).toBe('{"desc": "this is a test"}')
+  });
+
   // Add a test for string treatment
   test('string treatment evaluations', async () => {
     const result = await client.getStringValue('some_other_feature', 'default');
