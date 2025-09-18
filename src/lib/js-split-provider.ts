@@ -172,7 +172,6 @@ export class OpenFeatureSplitProvider implements Provider {
     if (Number.isNaN(result)) {
       throw new ParseError(`Invalid numeric value ${stringValue}`);
     }
-    console.log(result)
     return result;
   }
 

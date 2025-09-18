@@ -87,7 +87,7 @@ describe('OpenFeature Split Provider - Mock Integration Tests', () => {
 
   test('control treatment should be handled correctly', async () => {
     try {
-      provider.resolveBooleanEvaluation('non_existent_feature', false, { targetingKey: 'user_1' });
+      provider.resolveBooleanEvaluation('non_existent_feature', false, { targetingKey: 'user1' });
     } catch (error) {
       expect(error.name).toBe('FlagNotFoundError');
       expect(error.message).toContain('control');
