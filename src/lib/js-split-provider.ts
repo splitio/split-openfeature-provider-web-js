@@ -7,13 +7,13 @@ import {
   ParseError,
   FlagNotFoundError,
   JsonValue,
-  TargetingKeyMissingError,
   StandardResolutionReasons,
   Logger,
   ProviderEvents,
   OpenFeatureEventEmitter,
+  TrackingEventDetails,
 } from "@openfeature/web-sdk";
-import type SplitIO from "@splitsoftware/splitio/types/splitio";
+import type SplitIO from "@splitsoftware/splitio-browserjs/types/splitio";
 
 type Consumer = {
   key: string | undefined;
@@ -28,9 +28,29 @@ export class OpenFeatureSplitProvider implements Provider {
     name: "split",
   };
   private client: SplitIO.IBrowserClient;
+  private factory: SplitIO.IBrowserSDK;
+  private trafficType: string;
   public readonly events = new OpenFeatureEventEmitter();
 
+  onContextChange(oldContext: EvaluationContext, newContext: EvaluationContext): Promise<void> {
+    const { targetingKey: oldTargetingKey } = oldContext;
+    const { targetingKey: newTargetingKey, trafficType: newTrafficType } = newContext;
+
+    this.trafficType = newTrafficType && newTrafficType !== this.trafficType ? newTrafficType as string : this.trafficType ;
+    if (newTargetingKey && newTargetingKey !== oldTargetingKey) {
+      this.client = this.factory.client(newTargetingKey);
+      return new Promise((resolve, reject) => {
+        this.client.on(this.client.Event.SDK_READY, () => resolve());
+        this.client.on(this.client.Event.SDK_READY_TIMED_OUT, () => reject(new Error('Split SDK timed out')));
+      });
+    }
+    return Promise.resolve();
+  }
+
   constructor(splitFactory: SplitIO.IBrowserSDK) {
+    // Asume 'user' as default traffic type'
+    this.trafficType = 'user';
+    this.factory = splitFactory
     this.client = splitFactory.client();
     this.client.on(this.client.Event.SDK_UPDATE, () => {
       this.events.emit(ProviderEvents.ConfigurationChanged)
@@ -126,20 +146,16 @@ export class OpenFeatureSplitProvider implements Provider {
     flagKey: string,
     consumer: Consumer
   ): ResolutionDetails<string> {
-    if (!consumer.key) {
-      throw new TargetingKeyMissingError(
-        'The Split provider requires a targeting key.'
-      );
-    }
     if (flagKey == null || flagKey === '') {
       throw new FlagNotFoundError(
         'flagKey must be a non-empty string'
       );
     }
-    const { treatment: value, config }: SplitIO.TreatmentWithConfig = this.client.getTreatmentWithConfig(
+    const treatment: SplitIO.TreatmentWithConfig = this.client.getTreatmentWithConfig(
       flagKey,
       consumer.attributes
     );
+    const {treatment: value, config} = treatment
 
     if (value === CONTROL_TREATMENT) {
       throw new FlagNotFoundError(CONTROL_VALUE_ERROR_MESSAGE);
@@ -152,6 +168,34 @@ export class OpenFeatureSplitProvider implements Provider {
       reason: StandardResolutionReasons.TARGETING_MATCH,
     };
     return details;
+  }
+
+  track(
+    trackingEventName: string,
+    _: EvaluationContext,
+    details: TrackingEventDetails
+  ): void {
+
+    // eventName is always required
+    if (trackingEventName == null || trackingEventName === '')
+      throw new ParseError('Missing eventName, required to track');
+
+    let value;
+    let properties: SplitIO.Properties = {};
+    if (details != null) {
+      if (details.value != null) {
+        value = details.value;
+      }
+      if (details.properties != null) {
+        properties = details.properties as SplitIO.Properties;
+      }
+    } 
+
+    this.client.track(this.trafficType, trackingEventName, value, properties);
+  }
+
+  async onClose?(): Promise<void> {
+    return this.client.destroy();
   }
 
   //Transform the context into an object useful for the Split API, an key string with arbitrary Split "Attributes".
