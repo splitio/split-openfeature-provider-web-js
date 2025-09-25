@@ -35,8 +35,11 @@ describe('OpenFeature Split Provider - Mock Integration Tests', () => {
       destroy: jest.fn(() => Promise.resolve())
     };
 
-    // Create the provider with our mock Split client
-    provider = new OpenFeatureSplitProvider({ client: () => mockSplitClient});
+    const mockSplitFactory = {
+      client: () => mockSplitClient,
+      destroy: () => {} 
+    }
+    provider = new OpenFeatureSplitProvider(mockSplitFactory);
 
     // Register with OpenFeature
     OpenFeature.setProviderAndWait(provider);

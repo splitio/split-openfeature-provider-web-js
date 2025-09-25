@@ -16,7 +16,8 @@ import {
 import type SplitIO from "@splitsoftware/splitio-browserjs/types/splitio";
 
 type Consumer = {
-  key: string | undefined;
+  targetingKey: string | undefined;
+  trafficType: string;
   attributes: SplitIO.Attributes;
 };
 
@@ -39,9 +40,13 @@ export class OpenFeatureSplitProvider implements Provider {
     this.trafficType = newTrafficType && newTrafficType !== this.trafficType ? newTrafficType as string : this.trafficType ;
     if (newTargetingKey && newTargetingKey !== oldTargetingKey) {
       this.client = this.factory.client(newTargetingKey);
+      
       return new Promise((resolve, reject) => {
-        this.client.on(this.client.Event.SDK_READY, () => resolve());
-        this.client.on(this.client.Event.SDK_READY_TIMED_OUT, () => reject(new Error('Split SDK timed out')));
+        const emitContextChange = () => {
+          this.events.emit(ProviderEvents.Ready);
+          resolve();
+        }
+        this.readinessHandler(emitContextChange, reject);
       });
     }
     return Promise.resolve();
@@ -56,27 +61,7 @@ export class OpenFeatureSplitProvider implements Provider {
       this.events.emit(ProviderEvents.ConfigurationChanged)
     });
 
-    const onSdkReady = () => {
-      console.log(`${this.metadata.name} provider initialized`);
-      this.events.emit(ProviderEvents.Ready)
-    };
-
-    const onSdkTimedOut = () => {
-      console.log(`${this.metadata.name} provider couldn't initialize`);
-      this.events.emit(ProviderEvents.Error);
-    };
-
-    const clientStatus = (this.client as any).__getStatus();
-    if (clientStatus.isReady) {
-      onSdkReady();
-      return;
-    } 
-    if (clientStatus.hasTimedout || clientStatus.isTimedOut) {
-      onSdkTimedOut();
-      return;
-    }
-    this.client.on(this.client.Event.SDK_READY, onSdkReady);
-    this.client.on(this.client.Event.SDK_READY_TIMED_OUT, onSdkTimedOut);
+    this.readinessHandler();
   }
 
   resolveBooleanEvaluation(
@@ -172,7 +157,7 @@ export class OpenFeatureSplitProvider implements Provider {
 
   track(
     trackingEventName: string,
-    _: EvaluationContext,
+    context: EvaluationContext,
     details: TrackingEventDetails
   ): void {
 
@@ -180,6 +165,7 @@ export class OpenFeatureSplitProvider implements Provider {
     if (trackingEventName == null || trackingEventName === '')
       throw new ParseError('Missing eventName, required to track');
 
+    const {trafficType} = this.transformContext(context);
     let value;
     let properties: SplitIO.Properties = {};
     if (details != null) {
@@ -191,18 +177,23 @@ export class OpenFeatureSplitProvider implements Provider {
       }
     } 
 
-    this.client.track(this.trafficType, trackingEventName, value, properties);
+    this.client.track(trafficType, trackingEventName, value, properties);
   }
 
   async onClose?(): Promise<void> {
-    return this.client.destroy();
+    return this.factory.destroy();
   }
 
   //Transform the context into an object useful for the Split API, an key string with arbitrary Split "Attributes".
   private transformContext(context: EvaluationContext): Consumer {
-    const { targetingKey, ...attributes } = context;
+    const { targetingKey, trafficType: ttVal, ...attributes } = context;
+    const trafficType =
+      ttVal != null && typeof ttVal === 'string' && ttVal.trim() !== ''
+        ? ttVal
+        : this.trafficType; 
     return {
-      key: targetingKey,
+      targetingKey,
+      trafficType,
       // Stringify context objects include date.
       attributes: JSON.parse(JSON.stringify(attributes)),
     };
@@ -237,5 +228,29 @@ export class OpenFeatureSplitProvider implements Provider {
     } catch (err) {
       throw new ParseError(`Error parsing ${stringValue} as JSON, ${err}`);
     }
+  }
+
+  private readinessHandler(onSdkReady?: () => any, onSdkTimedOut?: () => any): void {
+    onSdkReady = onSdkReady ? onSdkReady : () => {
+      console.log(`${this.metadata.name} provider initialized`);
+      this.events.emit(ProviderEvents.Ready)
+    };
+
+    onSdkTimedOut = onSdkTimedOut ? onSdkTimedOut : () => {
+      console.log(`${this.metadata.name} provider couldn't initialize`);
+      this.events.emit(ProviderEvents.Error);
+    };
+
+    const clientStatus = (this.client as any).__getStatus();
+    if (clientStatus.isReady) {
+      onSdkReady();
+      return;
+    } 
+    if (clientStatus.hasTimedout || clientStatus.isTimedOut) {
+      onSdkTimedOut();
+      return;
+    }
+    this.client.on(this.client.Event.SDK_READY, onSdkReady);
+    this.client.on(this.client.Event.SDK_READY_TIMED_OUT, onSdkTimedOut);
   }
 }

@@ -45,6 +45,7 @@
     "globals": "^16.4.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "jest-fetch-mock": "^3.0.3",
     "jiti": "^2.5.1",
     "replace": "^1.2.1",
     "rimraf": "^3.0.2",
