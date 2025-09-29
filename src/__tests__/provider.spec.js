@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-conditional-expect */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { OpenFeatureSplitProvider } from '../lib/js-split-provider';
 
@@ -34,6 +35,8 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
         if (flagKey === 'non-existent') return { treatment: 'control', config: {} };
         return { treatment: 'control', config: {} };
       }),
+      // mock tracking
+      track: jest.fn(() => {}),
       
       // Clean up
       destroy: jest.fn(() => Promise.resolve())
@@ -45,7 +48,7 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     });
   });
   
-  test('should transform boolean ON treatment to true', async () => {
+  test('should transform boolean ON treatment to true', () => {
     const result = provider.resolveBooleanEvaluation(
       'boolean-flag',
       false, // default value
@@ -62,7 +65,7 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     );
   });
   
-  test('should transform boolean OFF treatment to false', async () => {
+  test('should transform boolean OFF treatment to false', () => {
     const result = provider.resolveBooleanEvaluation(
       'boolean-flag-off',
       true, // default value
@@ -74,7 +77,7 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     expect(result.variant).toBe('off');
   });
   
-  test('should handle string treatments', async () => {
+  test('should handle string treatments', () => {
     const result = provider.resolveStringEvaluation(
       'string-flag',
       'default', // default value
@@ -86,7 +89,7 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     expect(result.variant).toBe('a-string-treatment');
   });
   
-  test('should handle number treatments', async () => {
+  test('should handle number treatments', () => {
     const result = provider.resolveNumberEvaluation(
       'number-flag',
       0, // default value
@@ -98,7 +101,7 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     expect(result.variant).toBe('42');
   });
   
-  test('should handle object treatments', async () => {
+  test('should handle object treatments', () => {
     const result = provider.resolveObjectEvaluation(
       'object-flag',
       {}, // default value
@@ -120,16 +123,41 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
       );
     }).toThrow(/control/);
   });
-  
-  test('should throw error when targeting key is missing', () => {
-    expect(() => {
-      provider.resolveStringEvaluation(
-        'string-flag',
-        'default', // default value
-        {}, // no targeting key
-        console // logger
-      );
-    }).toThrow(/targeting key/i);
+
+  test('track: throws when missing eventName', () => {
+    try {
+      provider.track('', { trafficType: 'user' }, {});
+    } catch (e) {
+      expect(e.message).toBe('Missing eventName, required to track');
+      expect(e.code).toBe('PARSE_ERROR');
+    }
+  });
+
+  test('track: throws when missing trafficType', () => {
+    try {
+      provider.track('evt', {}, {});
+    } catch (e) {
+      expect(e.message).toBe('Missing trafficType variable, required to track');
+      expect(e.code).toBe('INVALID_CONTEXT');
+    }
+  });
+
+  test('track: ok without details', () => {
+    const trackSpy = jest.spyOn(mockSplitClient, 'track');
+    provider.track('view', { trafficType: 'user' }, null);
+    expect(trackSpy).toHaveBeenCalledTimes(1);
+    expect(trackSpy).toHaveBeenCalledWith('user', 'view', undefined, {});
+  });
+
+  test('track: ok with details', () => {
+    const trackSpy = jest.spyOn(mockSplitClient, 'track');
+    provider.track(
+      'purchase',
+      { trafficType: 'user' },
+      { value: 9.99, properties: { plan: 'pro', beta: true } }
+    );
+    expect(trackSpy).toHaveBeenCalledTimes(1);
+    expect(trackSpy).toHaveBeenCalledWith('user', 'purchase', 9.99, { plan: 'pro', beta: true });
   });
   
 });

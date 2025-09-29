@@ -32,7 +32,7 @@ describe('OpenFeature Split Provider - Working Integration Test', () => {
     provider = new OpenFeatureSplitProvider(splitFactory);
     
     OpenFeature.setProvider(provider);
-    OpenFeature.setContext({targetingKey: 'user1'})
+    await OpenFeature.setContext({targetingKey: 'user1'})
     client = OpenFeature.getClient('test');
       
   });
