@@ -19,7 +19,7 @@ describe('OpenFeature Split Provider - Debug Tests', () => {
         'int_feature': '32',
         'obj_feature': '{"key": "value"}'
       }
-    })
+    });
     splitClient =splitFactory.client();
     
     // Add direct Split client test to verify it works as expected

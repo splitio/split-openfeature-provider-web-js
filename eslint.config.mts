@@ -9,7 +9,10 @@ export default defineConfig([
     files: ["**/*.{js,mjs,cjs,ts,mts,cts}"], 
     plugins: { js }, 
     extends: ["js/recommended"], 
-    languageOptions: { globals: globals.browser } 
+    languageOptions: { globals: globals.browser },
+    rules: {
+      semi: ["error", "always"], 
+    }
   },
   {
     files: ['**/*.{test,spec}.{js,ts,jsx,tsx}', '**/__tests__/**/*.{js,ts,jsx,tsx}'],

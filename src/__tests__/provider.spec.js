@@ -58,7 +58,7 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     
     expect(result.value).toBe(true);
     expect(result.variant).toBe('on');
-    expect(result.flagMetadata.config).toBe('{"desc": "this is a test"}')
+    expect(result.flagMetadata.config).toBe('{"desc": "this is a test"}');
     expect(mockSplitClient.getTreatmentWithConfig).toHaveBeenCalledWith(
       'boolean-flag',
       {}
