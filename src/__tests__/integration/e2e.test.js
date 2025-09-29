@@ -103,6 +103,7 @@ describe('OpenFeature Split Provider - E2E Integration Tests', () => {
       expect(details.flagKey).toBe('my_feature');
       expect(details.reason).toBe('TARGETING_MATCH');
       expect(details.variant).toBe('on');
+      expect(details.flagMetadata.config).toBe('{"desc": "this is a test"}')
     });
   });
 
@@ -162,6 +163,7 @@ describe('OpenFeature Split Provider - E2E Integration Tests', () => {
       expect(details.flagKey).toBe('my_feature');
       expect(details.variant).toBe('on');
       expect(details.reason).toBe('TARGETING_MATCH');
+      expect(details.flagMetadata.config).toBe('{"desc": "this is a test"}')
     });
   });
 });

@@ -23,12 +23,12 @@ describe('OpenFeature Split Provider - Mock Integration Tests', () => {
       __getStatus: () => ({isReady: true}),
       
       // Mock treatment evaluation methods
-      getTreatment: jest.fn((splitName) => {
-        if (splitName === 'my_feature') return 'on';
-        if (splitName === 'some_other_feature') return 'off';
-        if (splitName === 'int_feature') return '32';
-        if (splitName === 'obj_feature') return '{"key": "value"}';
-        return 'control';
+      getTreatmentWithConfig: jest.fn((splitName) => {
+        if (splitName === 'my_feature') return { treatment: 'on', config: '{"desc": "this is a test"}' };
+        if (splitName === 'some_other_feature') return { treatment: 'off' };
+        if (splitName === 'int_feature') return { treatment: '32' };
+        if (splitName === 'obj_feature') return { treatment: '{"key": "value"}' };
+        return { treatment: 'control' };
       }),
       
       // Mock for cleanup
@@ -53,7 +53,7 @@ describe('OpenFeature Split Provider - Mock Integration Tests', () => {
   test('boolean evaluation should work', async () => {
     const result = await client.getBooleanValue('my_feature', false);
     expect(result).toBe(true);
-    expect(mockSplitClient.getTreatment).toHaveBeenCalledWith('my_feature', {});
+    expect(mockSplitClient.getTreatmentWithConfig).toHaveBeenCalledWith('my_feature', {});
   });
 
   test('boolean evaluation should handle off value', async () => {
@@ -81,6 +81,7 @@ describe('OpenFeature Split Provider - Mock Integration Tests', () => {
     expect(details.value).toBe(true);
     expect(details.variant).toBe('on');
     expect(details.flagKey).toBe('my_feature');
+    expect(details.flagMetadata.config).toBe('{"desc": "this is a test"}')
     expect(details.reason).toBe('TARGETING_MATCH');
   });
 

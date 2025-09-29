@@ -24,15 +24,15 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
       Event: { SDK_READY: 'SDK_READY' },
       
       // Mock the treatments
-      getTreatment: jest.fn((flagKey, _attributes) => {
+      getTreatmentWithConfig: jest.fn((flagKey, _attributes) => {
         // Return specific values for our test cases
-        if (flagKey === 'boolean-flag') return 'on';
-        if (flagKey === 'boolean-flag-off') return 'off';
-        if (flagKey === 'string-flag') return 'a-string-treatment';
-        if (flagKey === 'number-flag') return '42';
-        if (flagKey === 'object-flag') return '{"key":"value","nested":{"inner":"data"}}';
-        if (flagKey === 'non-existent') return 'control';
-        return 'control';
+        if (flagKey === 'boolean-flag') return { treatment: 'on', config: '{"desc": "this is a test"}' };
+        if (flagKey === 'boolean-flag-off') return { treatment: 'off', config: {} };
+        if (flagKey === 'string-flag') return { treatment: 'a-string-treatment', config: {} };
+        if (flagKey === 'number-flag') return { treatment: '42', config: {} };
+        if (flagKey === 'object-flag') return { treatment: '{"key":"value","nested":{"inner":"data"}}', config: {} };
+        if (flagKey === 'non-existent') return { treatment: 'control', config: {} };
+        return { treatment: 'control', config: {} };
       }),
       
       // Clean up
@@ -55,7 +55,8 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     
     expect(result.value).toBe(true);
     expect(result.variant).toBe('on');
-    expect(mockSplitClient.getTreatment).toHaveBeenCalledWith(
+    expect(result.flagMetadata.config).toBe('{"desc": "this is a test"}')
+    expect(mockSplitClient.getTreatmentWithConfig).toHaveBeenCalledWith(
       'boolean-flag',
       {}
     );
@@ -131,15 +132,4 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     }).toThrow(/targeting key/i);
   });
   
-  test('should include metadata in evaluation result', () => {
-    const result = provider.resolveStringEvaluation(
-      'string-flag',
-      'default', // default value
-      { targetingKey: 'user-key' },
-      console // logger
-    );
-    
-    expect(result.flagKey).toBe('string-flag');
-    expect(result.reason).toBe('TARGETING_MATCH');
-  });
 });
