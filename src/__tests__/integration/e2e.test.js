@@ -1,169 +1,155 @@
-import { OpenFeature } from '@openfeature/web-sdk';
+import { OpenFeature, ProviderEvents } from '@openfeature/web-sdk';
 import { SplitFactory } from '@splitsoftware/splitio-browserjs';
+import fetchMock from 'jest-fetch-mock';
+
 import { OpenFeatureSplitProvider } from '../../lib/js-split-provider';
 
-// This is an end-to-end integration test that uses real clients (no mocks)
-// It uses a local split.yaml file for feature flag definitions
+import splitChangesMock1 from '../mocks/splitchanges.since.-1.json';
+import membershipsEmmanuel from '../mocks/memberships.emmanuel@split.io.json'
+import membershipsEmiliano from '../mocks/memberships.emiliano@split.io.json'
+import membershipsNicolas from '../mocks/memberships.nicolas@split.io.json'
 
+// This is an end-to-end integration test that uses real clients (no mocks)
 describe('OpenFeature Split Provider - E2E Integration Tests', () => {
   let client;
-  let splitClient;
 
   // Set up before all tests
   beforeAll(async () => {
-    // Initialize the Split client in localhost mode
-    const splitFactory = SplitFactory({
-      core: {
-        authorizationKey: 'localhost'
-      },
-      features: {
-        // Define features with proper structure
-        my_feature: {
-          treatment: 'on',
-          config: '{"desc": "this is a test"}'
-        },
-        some_other_feature: {
-          treatment: 'off'
-        },
-        int_feature: {
-          treatment: '32'
-        },
-        obj_feature: {
-          treatment: '{"key": "value"}'
-        }
-      }
-    })
-    splitClient = splitFactory.client();
-
-    // Wait for the client to be ready
-    await new Promise((resolve) => {
-      if (splitClient.ready()) {
-        console.log('Split client is already ready');
-        resolve();
-      } else {
-        console.log('Waiting for Split client to be ready...');
-        splitClient.on('SDK_READY', () => {
-          console.log('Split client is now ready');
-          resolve();
-        });
-        
-        // Add timeout just in case
-        setTimeout(() => {
-          console.warn('Split client ready timeout - continuing anyway');
-          resolve();
-        }, 5000);
-      }
+    fetchMock.enableMocks();   
+    fetchMock.mockIf(() => true, async req => {
+      if (req.url.includes('/splitChanges')) return { status: 200, body: JSON.stringify(splitChangesMock1) }
+      if (req.url.includes('/memberships/emmanuel')) return { status: 200, body: JSON.stringify(membershipsEmmanuel) }
+      if (req.url.includes('/memberships/emiliano')) return { status: 200, body: JSON.stringify(membershipsEmiliano) }
+      if (req.url.includes('/memberships/nicolas')) return { status: 200, body: JSON.stringify(membershipsNicolas) }
+      if (req.url.includes('/testImpressions')) return { status: 200 }
     });
 
-    // Create the Split provider with the real Split client
+    const config = {
+      core: {
+        authorizationKey: 'key',
+        key:'emmanuel@split.io'
+      },
+      urls: {
+        sdk: 'https://sdk.baseurl/readinessSuite1',
+        events: 'https://events.baseurl/readinessSuite1'
+      }
+    }
+
+    const splitFactory = SplitFactory(config);
     const provider = new OpenFeatureSplitProvider(splitFactory);
+    await OpenFeature.setProviderAndWait(provider);
 
-    // Register the provider with OpenFeature
-    OpenFeature.setProvider(provider);
-
-    // Set context
-    await OpenFeature.setContext({ targetingKey: "key" });
-
-    // Create a new OpenFeature client
     client = OpenFeature.getClient('integration-test');
+  })
 
-    // Note: In web SDK we don't set context globally
-    // Instead, we'll pass the context with each call
-    
-    // Print confirmation message
-    console.log('Setup complete - OpenFeature provider registered');
-  }, 10000); // Allow up to 10 seconds for setup
-
-  // No per-test cleanup needed as we're using the same client for all tests
-  
   // Clean up after all tests
   afterAll(async () => {
-    // Destroy the Split client to prevent memory leaks
-    if (splitClient) {
-      console.log('Destroying Split client...');
-      await splitClient.destroy();
-      console.log('Split client destroyed');
-    }
+    await OpenFeature.close()
   });
 
-  describe('Boolean evaluations', () => {
-    test('should correctly evaluate a boolean flag that is ON', async () => {
-      const result = await client.getBooleanValue('my_feature', false);
-      expect(result).toBe(true);
-    });
+  describe('Readiness events', () => {
+    test('should emit openfeature client ready', async () => {
+      await new Promise((resolve) => {
+        client.addHandler(ProviderEvents.Ready, (eventDetails) => {
+          expect(eventDetails).toEqual({ clientName: 'integration-test', domain: 'integration-test', providerName: 'split' })
+          resolve();
+        });
+      });
+    })
+  })
 
-    test('should correctly evaluate a boolean flag that is OFF', async () => {
-      const result = await client.getBooleanValue('some_other_feature', true);
+  describe('Boolean evaluations', () => {
+
+    test('should correctly evaluate a boolean flag that is ON', async () => {
+      let result = client.getBooleanValue('splitters', false);
+      expect(result).toBe(true);
+      await OpenFeature.setContext({ targetingKey: "emiliano@split.io" });
+      result = client.getBooleanValue('splitters', false);
       expect(result).toBe(false);
     });
 
-    test('should return details for boolean flag evaluation', async () => {
-      const details = await client.getBooleanDetails('my_feature', false);
+    test('should correctly evaluate a boolean flag that is OFF', async () => {
+      const result = await client.getBooleanValue('always_off', true);
+      expect(result).toBe(false);
+    });
+
+    test('should return details for boolean flag evaluation with attributes', async () => {
+
+      // If `group` attribute has `value_without_config` value, it should return off treatment without config
+      await OpenFeature.setContext({trafficType: 'user', group: 'value_without_config'});
+      let details = await client.getBooleanDetails('split_with_config', false);
+      expect(details.value).toBe(false);
+      expect(details.flagKey).toBe('split_with_config');
+      expect(details.reason).toBe('TARGETING_MATCH');
+      expect(details.variant).toBe('off');
+      expect(details.flagMetadata.config).toBe('');
+
+      // If `group` attribute isn't present, it should return om treatment with configs
+      await OpenFeature.setContext({trafficType: 'user'});
+      details = await client.getBooleanDetails('split_with_config', false);
       expect(details.value).toBe(true);
-      expect(details.flagKey).toBe('my_feature');
+      expect(details.flagKey).toBe('split_with_config');
       expect(details.reason).toBe('TARGETING_MATCH');
       expect(details.variant).toBe('on');
-      expect(details.flagMetadata.config).toBe('{"desc": "this is a test"}')
+      expect(details.flagMetadata.config).toBe('{"color":"brown","dimensions":{"height":12,"width":14},"text":{"inner":"click me"}}');
     });
   });
 
   describe('String evaluations', () => {
     test('should correctly evaluate a string flag', async () => {
-      // Since "some_other_feature" has treatment "off", it should return "off" as string
-      const result = await client.getStringValue('some_other_feature', 'default');
-      expect(result).toBe('off');
+      await OpenFeature.setContext({targetingKey: 'emmanuel@split.io', trafficType: 'account'});
+      const result = client.getStringValue('blacklist', 'default');
+      expect(result).toBe('not_allowed');
     });
 
     test('should return details for string flag evaluation', async () => {
-      const details = await client.getStringDetails('some_other_feature', 'default');
+      let details = await client.getStringDetails('developers', 'default');
       expect(details.value).toBe('off');
-      expect(details.flagKey).toBe('some_other_feature');
+      expect(details.flagKey).toBe('developers');
       expect(details.reason).toBe('TARGETING_MATCH');
       expect(details.variant).toBe('off');
+      expect(details.flagMetadata.config).toBe('');
+
+      await OpenFeature.setContext({targetingKey: 'emiliano@split.io', trafficType: 'account'});
+      details = await client.getStringDetails('developers', 'default');
+      expect(details.value).toBe('on');
+      expect(details.flagKey).toBe('developers');
+      expect(details.reason).toBe('TARGETING_MATCH');
+      expect(details.variant).toBe('on');
+      expect(details.flagMetadata.config).toBe('{"color":"blue"}');
     });
   });
 
   describe('Number evaluations', () => {
     test('should correctly evaluate a number flag', async () => {
-      const result = await client.getNumberValue('int_feature', 0);
-      expect(result).toBe(32);
+      const result = await client.getNumberValue('qc_team', 0);
+      expect(result).toBe(20);
     });
 
     test('should return details for number flag evaluation', async () => {
-      const details = await client.getNumberDetails('int_feature', 0);
-      expect(details.value).toBe(32);
-      expect(details.flagKey).toBe('int_feature');
+      const details = await client.getNumberDetails('qc_team', 0);
+      expect(details.value).toBe(20);
+      expect(details.flagKey).toBe('qc_team');
       expect(details.reason).toBe('TARGETING_MATCH');
-      expect(details.variant).toBe('32');
+      expect(details.variant).toBe('20');
+      expect(details.flagMetadata.config).toBe('{"color":"red"}');
     });
   });
 
   describe('Object evaluations', () => {
     test('should correctly evaluate an object flag', async () => {
-      const result = await client.getObjectValue('obj_feature', {});
-      expect(result).toEqual({ key: 'value' });
+      await OpenFeature.setContext({targetingKey: 'nicolas@split.io', trafficType: 'account'});
+      const result = await client.getObjectValue('whitelist', {ke:true});
+      expect(result).toEqual({ allowed: true });
     });
 
     test('should return details for object flag evaluation', async () => {
-      const details = await client.getObjectDetails('obj_feature', {});
-      expect(details.value).toEqual({ key: 'value' });
-      expect(details.flagKey).toBe('obj_feature');
+      const details = await client.getObjectDetails('whitelist', {});
+      expect(details.value).toEqual({ allowed: true });
+      expect(details.flagKey).toBe('whitelist');
       expect(details.reason).toBe('TARGETING_MATCH');
-      expect(details.variant).toBe('{"key": "value"}');
-    });
-  });
-
-  describe('Configuration', () => {
-    test('should provide configuration from treatment', async () => {
-      // The split.yaml defines a config for my_feature
-      const details = await client.getBooleanDetails('my_feature', false);
-      
-      // Should have configuration data
-      expect(details.value).toBe(true);
-      expect(details.flagKey).toBe('my_feature');
-      expect(details.variant).toBe('on');
-      expect(details.reason).toBe('TARGETING_MATCH');
-      expect(details.flagMetadata.config).toBe('{"desc": "this is a test"}')
+      expect(details.variant).toBe('{"allowed":true}');
+      expect(details.flagMetadata.config).toBe('{"color":"green"}');
     });
   });
 });
