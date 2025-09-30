@@ -240,7 +240,6 @@ export class OpenFeatureSplitProvider implements Provider {
   private async eventsHandler(onSdkReady: (params?: any) => void, onSdkTimedOut: () => void): Promise <void> {
 
     const onSdkReadyFromCache = () => {
-      console.log(`${this.metadata.name} provider initialized`);
       this.events.emit(ProviderEvents.Stale, {
         message: `Split ready from cache`,
       });
