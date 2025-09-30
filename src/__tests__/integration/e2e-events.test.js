@@ -6,6 +6,7 @@ import { OpenFeatureSplitProvider } from '../../lib/js-split-provider';
 
 import splitChangesMock1 from '../mocks/splitchanges.since.-1.json';
 import membershipsEmmanuel from '../mocks/memberships.emmanuel@split.io.json';
+import membershipsEmiliano from '../mocks/memberships.emiliano@split.io.json';
 
 // This is an end-to-end integration test that uses real clients (no mocks)
 describe('OpenFeature Split Provider - E2E Integration Tests', () => {
@@ -96,6 +97,66 @@ describe('OpenFeature Split Provider - E2E Integration Tests', () => {
             reject('should be ready');
           }
         });
+      });
+    });
+
+    test('should emit ready after timeout', async () => {
+      fetchMock.mockIf(() => true, async req => {
+        if (req.url.includes('/splitChanges')) return { status: 200, body: JSON.stringify(splitChangesMock1) };
+        if (req.url.includes('/memberships/emmanuel')) return { status: 200, body: JSON.stringify(membershipsEmmanuel) };
+        if (req.url.includes('/testImpressions')) return { status: 200 };
+      });
+
+      const config = {
+        ...baseConfig,
+        scheduler: {
+          featuresRefreshRate: 3,
+          segmentsRefreshRate: 0.25,
+        },
+        startup: {
+          readyTimeout: 0.2,
+          requestTimeoutBeforeReady: 0.1,
+          retriesOnFailureBeforeReady: 10
+        },
+      };
+      const splitFactory = SplitFactory(config);
+      const client = OpenFeature.getClient();
+
+      await new Promise((resolve, reject) => {
+
+        client.addHandler(ProviderEvents.Stale, () => {
+          reject('should not emit stale');
+        });
+        
+        client.addHandler(ProviderEvents.Ready, () => {
+
+          // initialize a new client and make it time out
+          OpenFeature.setContext({targetingKey: 'emiliano@split.io'});
+          client.addHandler(ProviderEvents.Error, () => {
+
+            // new client timed out, when ready should emit Configuration Changed event
+            client.addHandler(ProviderEvents.ConfigurationChanged, async () => {
+              const details = await client.getStringDetails('developers', 'default');
+              expect(details.value).toBe('on');
+              expect(details.flagKey).toBe('developers');
+              expect(details.reason).toBe('TARGETING_MATCH');
+              expect(details.variant).toBe('on');
+              expect(details.flagMetadata.config).toBe('{"color":"blue"}');
+              resolve();
+            });
+            
+            // add timed out client membership to get it ready
+            fetchMock.mockIf(() => true, async req => {
+              if (req.url.includes('/splitChanges')) return { status: 200, body: JSON.stringify(splitChangesMock1) };
+              if (req.url.includes('/memberships/emmanuel')) return { status: 200, body: JSON.stringify(membershipsEmmanuel) };
+              if (req.url.includes('/memberships/emiliano')) return { status: 200, body: JSON.stringify(membershipsEmiliano) };
+              if (req.url.includes('/testImpressions')) return { status: 200 };
+            });
+          });
+        });
+
+        const provider = new OpenFeatureSplitProvider(splitFactory);
+        OpenFeature.setProvider(provider);
       });
     });
 
