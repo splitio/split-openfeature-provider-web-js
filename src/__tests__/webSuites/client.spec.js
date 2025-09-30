@@ -18,7 +18,7 @@ const mockFeatures = {
     treatment: '{"key": "value"}'
   }
 };
-let mockSplitClient
+let mockSplitClient;
 
 // Mock SplitIO SDK - Web version
 jest.mock('@splitsoftware/splitio-browserjs', () => {

@@ -26,13 +26,13 @@ describe('OpenFeature Split Provider - Working Integration Test', () => {
         authorizationKey: 'localhost'
       },
       features: localFeatures
-    })
+    });
     splitClient = splitFactory.client();
 
     provider = new OpenFeatureSplitProvider(splitFactory);
     
     OpenFeature.setProvider(provider);
-    await OpenFeature.setContext({targetingKey: 'user1'})
+    await OpenFeature.setContext({targetingKey: 'user1'});
     client = OpenFeature.getClient('test');
       
   });
@@ -53,7 +53,7 @@ describe('OpenFeature Split Provider - Working Integration Test', () => {
     // Test the boolean value evaluation
     const result = await client.getBooleanDetails('my_feature', false);
     expect(result.value).toBe(true);
-    expect(result.flagMetadata.config).toBe('{"desc": "this is a test"}')
+    expect(result.flagMetadata.config).toBe('{"desc": "this is a test"}');
   });
 
   // Add a test for string treatment

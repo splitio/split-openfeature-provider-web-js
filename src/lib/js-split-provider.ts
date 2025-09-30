@@ -31,7 +31,7 @@ export class OpenFeatureSplitProvider implements Provider {
   private client: SplitIO.IBrowserClient;
   private factory: SplitIO.IBrowserSDK;
   private trafficType: string;
-  public readonly events = new OpenFeatureEventEmitter();
+  public events = new OpenFeatureEventEmitter();
 
   onContextChange(oldContext: EvaluationContext, newContext: EvaluationContext): Promise<void> {
     const { targetingKey: oldTargetingKey } = oldContext;
@@ -43,10 +43,11 @@ export class OpenFeatureSplitProvider implements Provider {
       
       return new Promise((resolve, reject) => {
         const emitContextChange = () => {
-          this.events.emit(ProviderEvents.Ready);
+          this.events.emit(ProviderEvents.ConfigurationChanged);
           resolve();
-        }
-        this.readinessHandler(emitContextChange, reject);
+        };
+
+        this.eventsHandler(emitContextChange, reject);
       });
     }
     return Promise.resolve();
@@ -55,13 +56,19 @@ export class OpenFeatureSplitProvider implements Provider {
   constructor(splitFactory: SplitIO.IBrowserSDK) {
     // Asume 'user' as default traffic type'
     this.trafficType = 'user';
-    this.factory = splitFactory
+    this.factory = splitFactory;
     this.client = splitFactory.client();
-    this.client.on(this.client.Event.SDK_UPDATE, () => {
-      this.events.emit(ProviderEvents.ConfigurationChanged)
-    });
+  }
 
-    this.readinessHandler();
+  async initialize(): Promise<void> {
+    
+    await new Promise ((resolve, reject) => {
+      try {
+        this.eventsHandler(resolve, reject);
+      } catch {
+        reject();
+      }
+    });
   }
 
   resolveBooleanEvaluation(
@@ -140,7 +147,7 @@ export class OpenFeatureSplitProvider implements Provider {
       flagKey,
       consumer.attributes
     );
-    const {treatment: value, config} = treatment
+    const {treatment: value, config} = treatment;
 
     if (value === CONTROL_TREATMENT) {
       throw new FlagNotFoundError(CONTROL_VALUE_ERROR_MESSAGE);
@@ -230,27 +237,35 @@ export class OpenFeatureSplitProvider implements Provider {
     }
   }
 
-  private readinessHandler(onSdkReady?: () => any, onSdkTimedOut?: () => any): void {
-    onSdkReady = onSdkReady ? onSdkReady : () => {
-      console.log(`${this.metadata.name} provider initialized`);
-      this.events.emit(ProviderEvents.Ready)
-    };
+  private async eventsHandler(onSdkReady: (params?: any) => void, onSdkTimedOut: () => void): Promise <void> {
 
-    onSdkTimedOut = onSdkTimedOut ? onSdkTimedOut : () => {
-      console.log(`${this.metadata.name} provider couldn't initialize`);
-      this.events.emit(ProviderEvents.Error);
+    const onSdkReadyFromCache = () => {
+      this.events.emit(ProviderEvents.Stale, {
+        message: `Split ready from cache`,
+      });
     };
 
     const clientStatus = (this.client as any).__getStatus();
     if (clientStatus.isReady) {
       onSdkReady();
-      return;
-    } 
-    if (clientStatus.hasTimedout || clientStatus.isTimedOut) {
-      onSdkTimedOut();
-      return;
+    } else {
+
+      if (clientStatus.isReadyFromCache) {
+        onSdkReadyFromCache();
+      } else {
+        this.client.on(this.client.Event.SDK_READY_FROM_CACHE, onSdkReadyFromCache);
+      }
+
+      if (clientStatus.hasTimedout) {
+        onSdkTimedOut();
+      } else {
+        this.client.on(this.client.Event.SDK_READY_TIMED_OUT, onSdkTimedOut);
+      }
+      this.client.on(this.client.Event.SDK_READY, onSdkReady);
     }
-    this.client.on(this.client.Event.SDK_READY, onSdkReady);
-    this.client.on(this.client.Event.SDK_READY_TIMED_OUT, onSdkTimedOut);
+
+    this.client.on(this.client.Event.SDK_UPDATE, () => {
+      this.events.emit(ProviderEvents.ConfigurationChanged);
+    });   
   }
 }

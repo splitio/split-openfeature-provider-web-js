@@ -5,9 +5,9 @@ import fetchMock from 'jest-fetch-mock';
 import { OpenFeatureSplitProvider } from '../../lib/js-split-provider';
 
 import splitChangesMock1 from '../mocks/splitchanges.since.-1.json';
-import membershipsEmmanuel from '../mocks/memberships.emmanuel@split.io.json'
-import membershipsEmiliano from '../mocks/memberships.emiliano@split.io.json'
-import membershipsNicolas from '../mocks/memberships.nicolas@split.io.json'
+import membershipsEmmanuel from '../mocks/memberships.emmanuel@split.io.json';
+import membershipsEmiliano from '../mocks/memberships.emiliano@split.io.json';
+import membershipsNicolas from '../mocks/memberships.nicolas@split.io.json';
 
 // This is an end-to-end integration test that uses real clients (no mocks)
 describe('OpenFeature Split Provider - E2E Integration Tests', () => {
@@ -17,11 +17,11 @@ describe('OpenFeature Split Provider - E2E Integration Tests', () => {
   beforeAll(async () => {
     fetchMock.enableMocks();   
     fetchMock.mockIf(() => true, async req => {
-      if (req.url.includes('/splitChanges')) return { status: 200, body: JSON.stringify(splitChangesMock1) }
-      if (req.url.includes('/memberships/emmanuel')) return { status: 200, body: JSON.stringify(membershipsEmmanuel) }
-      if (req.url.includes('/memberships/emiliano')) return { status: 200, body: JSON.stringify(membershipsEmiliano) }
-      if (req.url.includes('/memberships/nicolas')) return { status: 200, body: JSON.stringify(membershipsNicolas) }
-      if (req.url.includes('/testImpressions')) return { status: 200 }
+      if (req.url.includes('/splitChanges')) return { status: 200, body: JSON.stringify(splitChangesMock1) };
+      if (req.url.includes('/memberships/emmanuel')) return { status: 200, body: JSON.stringify(membershipsEmmanuel) };
+      if (req.url.includes('/memberships/emiliano')) return { status: 200, body: JSON.stringify(membershipsEmiliano) };
+      if (req.url.includes('/memberships/nicolas')) return { status: 200, body: JSON.stringify(membershipsNicolas) };
+      if (req.url.includes('/testImpressions')) return { status: 200 };
     });
 
     const config = {
@@ -33,30 +33,30 @@ describe('OpenFeature Split Provider - E2E Integration Tests', () => {
         sdk: 'https://sdk.baseurl/readinessSuite1',
         events: 'https://events.baseurl/readinessSuite1'
       }
-    }
+    };
 
     const splitFactory = SplitFactory(config);
     const provider = new OpenFeatureSplitProvider(splitFactory);
     await OpenFeature.setProviderAndWait(provider);
 
     client = OpenFeature.getClient('integration-test');
-  })
+  });
 
   // Clean up after all tests
   afterAll(async () => {
-    await OpenFeature.close()
+    await OpenFeature.close();
   });
 
   describe('Readiness events', () => {
     test('should emit openfeature client ready', async () => {
       await new Promise((resolve) => {
         client.addHandler(ProviderEvents.Ready, (eventDetails) => {
-          expect(eventDetails).toEqual({ clientName: 'integration-test', domain: 'integration-test', providerName: 'split' })
+          expect(eventDetails).toEqual({ clientName: 'integration-test', domain: 'integration-test', providerName: 'split' });
           resolve();
         });
       });
-    })
-  })
+    });
+  });
 
   describe('Boolean evaluations', () => {
 

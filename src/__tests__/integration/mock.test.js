@@ -38,12 +38,12 @@ describe('OpenFeature Split Provider - Mock Integration Tests', () => {
     const mockSplitFactory = {
       client: () => mockSplitClient,
       destroy: () => {} 
-    }
+    };
     provider = new OpenFeatureSplitProvider(mockSplitFactory);
 
     // Register with OpenFeature
     OpenFeature.setProviderAndWait(provider);
-    OpenFeature.setContext({ targetingKey: 'user1' })
+    OpenFeature.setContext({ targetingKey: 'user1' });
 
     // Get the client
     client = OpenFeature.getClient('mock-test');
@@ -84,7 +84,7 @@ describe('OpenFeature Split Provider - Mock Integration Tests', () => {
     expect(details.value).toBe(true);
     expect(details.variant).toBe('on');
     expect(details.flagKey).toBe('my_feature');
-    expect(details.flagMetadata.config).toBe('{"desc": "this is a test"}')
+    expect(details.flagMetadata.config).toBe('{"desc": "this is a test"}');
     expect(details.reason).toBe('TARGETING_MATCH');
   });
 
