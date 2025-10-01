@@ -1,14 +1,18 @@
-module.exports = {
-  displayName: 'js-split-provider',
-  preset: '../../jest.preset.js',
+export default {
+  displayName: 'openfeature-web-split-provider',
+  testEnvironment: 'jsdom',
+  testMatch: ['**/*.spec.js', '**/integration/*.test.js'],
   globals: {
     'ts-jest': {
-      tsconfig: '<rootDir>/tsconfig.spec.json',
+      tsconfig: '<rootDir>/tsconfig.json',
     },
   },
   transform: {
-    '^.+\\.[tj]s$': 'ts-jest',
+    '^.+\\.[tj]sx?$': 'ts-jest',
   },
-  moduleFileExtensions: ['ts', 'js', 'html'],
-  coverageDirectory: '../../coverage/packages/js-split-provider',
+  transformIgnorePatterns: [
+    'node_modules/(?!(fetch-mock)/)' 
+  ],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'html'],
+  coverageDirectory: './coverage',
 };

@@ -105,5 +105,5 @@ dist
 
 # Build output
 es/
-lib/
+/lib/
 types/
