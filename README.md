@@ -4,34 +4,34 @@
 ## Overview
 This Provider is designed to allow the use of OpenFeature with Split, the platform for controlled rollouts, serving features to your users via the Split feature flag to manage your complete customer experience.
 
-## Compatibility
-
-
 ## Getting started
 Below is a simple example that describes the instantiation of the Split Provider. Please see the [OpenFeature Documentation](https://docs.openfeature.dev/docs/reference/concepts/evaluation-api) for details on how to use the OpenFeature SDK.
 
 ### Add the Split provider
 
 ```sh
-npm install @splitsoftware/openfeature-js-split-provider
+npm install @splitsoftware/openfeature-web-split-provider
 ```
 
 ### Confirm peer dependencies are installed
 ```sh
-npm install @splitsoftware/splitio
-npm install @openfeature/server-sdk
+npm install @splitsoftware/splitio-browserjs
+npm install @openfeature/web-sdk
 ```
 
-### Register the Split provider with OpenFeature
+### Register the Split provider with OpenFeature using splitFactory
 ```js
-const OpenFeature = require('@openfeature/server-sdk').OpenFeature;
-const SplitFactory = require('@splitsoftware/splitio').SplitFactory;
-const OpenFeatureSplitProvider = require('@splitsoftware/openfeature-js-split-provider').OpenFeatureSplitProvider;
+import { OpenFeature } from '@openfeature/web-sdk';
+import { SplitFactory } from '@splitsoftware/splitio-browserjs';
+import { OpenFeatureSplitProvider } from '@splitsoftware/openfeature-web-split-provider';
 
-const authorizationKey = 'your auth key'
-const splitClient = SplitFactory({core: {authorizationKey}}).client();
-const provider = new OpenFeatureSplitProvider({splitClient});
-openFeature.setProvider(provider);
+const splitFactory = SplitFactory({
+  core: {
+    authorizationKey: 'your auth key' 
+  }
+});
+const provider = new OpenFeatureSplitProvider(splitFactory);
+OpenFeature.setProvider(provider);
 ```
 
 ## Use of OpenFeature with Split
@@ -39,32 +39,62 @@ After the initial setup you can use OpenFeature according to their [documentatio
 
 One important note is that the Split Provider **requires a targeting key** to be set. Often times this should be set when evaluating the value of a flag by [setting an EvaluationContext](https://docs.openfeature.dev/docs/reference/concepts/evaluation-context) which contains the targeting key. An example flag evaluation is
 ```js
-const client = openFeature.getClient('CLIENT_NAME');
-
 const context: EvaluationContext = {
   targetingKey: 'TARGETING_KEY',
+  trafficType: 'account'
 };
-const boolValue = await client.getBooleanValue('boolFlag', false, context);
+OpenFeature.setContext(context)
 ```
-If the same targeting key is used repeatedly, the evaluation context may be set at the client level 
+
+## Evaluate with details
+Use the get*Details(...) APIs to get the value and rich context (variant, reason, error code, metadata). This provider includes the Split treatment config as a raw JSON string under flagMetadata["config"]
+
+```js
+const booleanTreatment = client.getBooleanDetails('boolFlag', false);
+
+const config = booleanTreatment.flagMetadata.config;
+```
+
+## Evaluate with attributes
+Evaluation attributes must be set in context before evaluation
+
 ```js
 const context: EvaluationContext = {
   targetingKey: 'TARGETING_KEY',
+  trafficType: 'account',
+  plan: 'premium',
+  couppon: 'WELCOME10'
 };
+OpenFeature.setContext(context);
+const booleanTreatment = client.getBooleanDetails('boolFlag', false);
+```
+
+## Tracking
+
+To use track(eventName, context, details) you must provide:
+
+- A non-blank `eventName`.
+- A context with:
+  - `targetingKey` (non-blank).
+  - `trafficType` (string, e.g. "user" or "account", "user" by default).
+
+Optional:
+
+- details with:
+  - `value`: numeric event value (defaults to 0).
+  - `properties`: map of attributes (prefer primitives: string/number/boolean/null).
+
+Example:
+```js
+const context = { targetingKey: 'user-123', trafficType: 'account' }
+const details = { value: 19.99, properties: { plan: 'pro', coupon: 'WELCOME10' }}
+
 client.setEvaluationContext(context)
+client.track('checkout.completed', details)
 ```
-or at the OpenFeatureAPI level 
-```js
-const context: EvaluationContext = {
-  targetingKey: 'TARGETING_KEY',
-};
-OpenFeatureAPI.getInstance().setCtx(context)
-````
-If the context was set at the client or api level, it is not required to provide it during flag evaluation.
-
 ## Submitting issues
  
-The Split team monitors all issues submitted to this [issue tracker](https://github.com/splitio/split-openfeature-provider-nodejs/issues). We encourage you to use this issue tracker to submit any bug reports, feedback, and feature enhancements. We'll do our best to respond in a timely manner.
+The Split team monitors all issues submitted to this [issue tracker](https://github.com/splitio/split-openfeature-provider-web-js/issues). We encourage you to use this issue tracker to submit any bug reports, feedback, and feature enhancements. We'll do our best to respond in a timely manner.
 
 ## Contributing
 Please see [Contributors Guide](CONTRIBUTORS-GUIDE.md) to find all you need to submit a Pull Request (PR).
@@ -80,16 +110,24 @@ To learn more about Split, contact hello@split.io, or get started with feature f
  
 Split has built and maintains SDKs for:
  
-* Java [Github](https://github.com/splitio/java-client) [Docs](https://help.split.io/hc/en-us/articles/360020405151-Java-SDK)
-* Javascript [Github](https://github.com/splitio/javascript-client) [Docs](https://help.split.io/hc/en-us/articles/360020448791-JavaScript-SDK)
-* Node [Github](https://github.com/splitio/javascript-client) [Docs](https://help.split.io/hc/en-us/articles/360020564931-Node-js-SDK)
 * .NET [Github](https://github.com/splitio/dotnet-client) [Docs](https://help.split.io/hc/en-us/articles/360020240172--NET-SDK)
-* Ruby [Github](https://github.com/splitio/ruby-client) [Docs](https://help.split.io/hc/en-us/articles/360020673251-Ruby-SDK)
-* PHP [Github](https://github.com/splitio/php-client) [Docs](https://help.split.io/hc/en-us/articles/360020350372-PHP-SDK)
-* Python [Github](https://github.com/splitio/python-client) [Docs](https://help.split.io/hc/en-us/articles/360020359652-Python-SDK)
-* GO [Github](https://github.com/splitio/go-client) [Docs](https://help.split.io/hc/en-us/articles/360020093652-Go-SDK)
 * Android [Github](https://github.com/splitio/android-client) [Docs](https://help.split.io/hc/en-us/articles/360020343291-Android-SDK)
+* Angular [Github](https://github.com/splitio/angular-sdk-plugin) [Docs](https://help.split.io/hc/en-us/articles/6495326064397-Angular-utilities)
+* Elixir thin-client [Github](https://github.com/splitio/elixir-thin-client) [Docs](https://help.split.io/hc/en-us/articles/26988707417869-Elixir-Thin-Client-SDK)
+* Flutter [Github](https://github.com/splitio/flutter-sdk-plugin) [Docs](https://help.split.io/hc/en-us/articles/8096158017165-Flutter-plugin)
+* GO [Github](https://github.com/splitio/go-client) [Docs](https://help.split.io/hc/en-us/articles/360020093652-Go-SDK)
 * iOS [Github](https://github.com/splitio/ios-client) [Docs](https://help.split.io/hc/en-us/articles/360020401491-iOS-SDK)
+* Java [Github](https://github.com/splitio/java-client) [Docs](https://help.split.io/hc/en-us/articles/360020405151-Java-SDK)
+* JavaScript [Github](https://github.com/splitio/javascript-client) [Docs](https://help.split.io/hc/en-us/articles/360020448791-JavaScript-SDK)
+* JavaScript for Browser [Github](https://github.com/splitio/javascript-browser-client) [Docs](https://help.split.io/hc/en-us/articles/360058730852-Browser-SDK)
+* Node.js [Github](https://github.com/splitio/javascript-client) [Docs](https://help.split.io/hc/en-us/articles/360020564931-Node-js-SDK)
+* PHP [Github](https://github.com/splitio/php-client) [Docs](https://help.split.io/hc/en-us/articles/360020350372-PHP-SDK)
+* PHP thin-client [Github](https://github.com/splitio/php-thin-client) [Docs](https://help.split.io/hc/en-us/articles/18305128673933-PHP-Thin-Client-SDK)
+* Python [Github](https://github.com/splitio/python-client) [Docs](https://help.split.io/hc/en-us/articles/360020359652-Python-SDK)
+* React [Github](https://github.com/splitio/react-client) [Docs](https://help.split.io/hc/en-us/articles/360038825091-React-SDK)
+* React Native [Github](https://github.com/splitio/react-native-client) [Docs](https://help.split.io/hc/en-us/articles/4406066357901-React-Native-SDK)
+* Redux [Github](https://github.com/splitio/redux-client) [Docs](https://help.split.io/hc/en-us/articles/360038851551-Redux-SDK)
+* Ruby [Github](https://github.com/splitio/ruby-client) [Docs](https://help.split.io/hc/en-us/articles/360020673251-Ruby-SDK)
  
 For a comprehensive list of open source projects visit our [Github page](https://github.com/splitio?utf8=%E2%9C%93&query=%20only%3Apublic%20).
  
