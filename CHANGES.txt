@@ -1,3 +1,3 @@
-1.0.0 (September 30, 2025)
+1.0.0 (October 1, 2025)
 - First release. 
 - Up to date with @openfeature/web-sdk v1.6.1, and @splitsoftware/splitio-browserjs 1.4.0
