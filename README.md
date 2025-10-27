@@ -27,11 +27,14 @@ import { OpenFeatureSplitProvider } from '@splitsoftware/openfeature-web-split-p
 
 const splitFactory = SplitFactory({
   core: {
-    authorizationKey: 'your auth key' 
+    authorizationKey: 'CLIENT_SIDE_SDK_KEY',
+    key: 'TARGETING_KEY'
   }
 });
 const provider = new OpenFeatureSplitProvider(splitFactory);
-OpenFeature.setProvider(provider);
+
+// Wait for the default SDK client for 'TARGETING_KEY' to be ready
+await OpenFeature.setProviderAndWait(provider);
 ```
 
 ## Use of OpenFeature with Split
@@ -43,7 +46,7 @@ const context: EvaluationContext = {
   targetingKey: 'TARGETING_KEY',
   trafficType: 'account'
 };
-OpenFeature.setContext(context)
+await OpenFeature.setContext(context)
 ```
 
 ## Evaluate with details
@@ -65,7 +68,7 @@ const context: EvaluationContext = {
   plan: 'premium',
   couppon: 'WELCOME10'
 };
-OpenFeature.setContext(context);
+await OpenFeature.setContext(context);
 const booleanTreatment = client.getBooleanDetails('boolFlag', false);
 ```
 
@@ -89,7 +92,7 @@ Example:
 const context = { targetingKey: 'user-123', trafficType: 'account' }
 const details = { value: 19.99, properties: { plan: 'pro', coupon: 'WELCOME10' }}
 
-client.setEvaluationContext(context)
+await client.setContext(context)
 client.track('checkout.completed', details)
 ```
 ## Submitting issues
