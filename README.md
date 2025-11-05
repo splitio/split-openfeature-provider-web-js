@@ -1,4 +1,4 @@
-# Split OpenFeature Provider for web js
+# Split OpenFeature Provider for Web JavaScript
 [![Twitter Follow](https://img.shields.io/twitter/follow/splitsoftware.svg?style=social&label=Follow&maxAge=1529000)](https://twitter.com/intent/follow?screen_name=splitsoftware)
 
 ## Overview
