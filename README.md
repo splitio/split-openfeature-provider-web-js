@@ -96,7 +96,7 @@ Example:
 const context = { targetingKey: 'user-123', trafficType: 'account' }
 const details = { value: 19.99, properties: { plan: 'pro', coupon: 'WELCOME10' }}
 
-await client.setContext(context)
+await OpenFeature.setContext(context)
 client.track('checkout.completed', details)
 ```
 
