@@ -107,7 +107,7 @@ client.track('checkout.completed', details)
 npm i @openfeature/angular-sdk @splitsoftware/splitio-browserjs @splitsoftware/openfeature-web-split-provider
 ```
 
-### Initialize the React SDK
+### Initialize the Angular SDK
 
 #### Traditional (NgModule) setup
 ```js
