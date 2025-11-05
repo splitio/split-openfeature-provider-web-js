@@ -102,7 +102,14 @@ client.track('checkout.completed', details)
 
 ## Angular Usage
 
-### Traditional (NgModule) setup
+### Install dependencies
+```bash
+npm i @openfeature/angular-sdk @splitsoftware/splitio-browserjs @splitsoftware/openfeature-web-split-provider
+```
+
+### Initialize the React SDK
+
+#### Traditional (NgModule) setup
 ```js
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
@@ -130,7 +137,7 @@ const openFeatureProvider = new OpenFeatureSplitProvider(splitFactory);
 export class AppModule {}
 ```
 
-### Standalone (Angular 16+) setup
+#### Standalone (Angular 16+) setup
 ```js
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, importProvidersFrom } from '@angular/core';
 import { OpenFeatureModule } from '@openfeature/angular-sdk';
@@ -157,7 +164,7 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-### Component injection and usage
+#### Component injection and usage
 ```js
 import { FeatureFlagService, EvaluationDetails } from '@openfeature/angular-sdk';
 
@@ -182,6 +189,13 @@ export class App {
 [angular-docs]: https://openfeature.dev/docs/reference/sdks/client/web/angular
 
 ## React usage
+
+### Install dependencies
+```bash
+npm i @openfeature/react-sdk @splitsoftware/splitio-browserjs @splitsoftware/openfeature-web-split-provider
+```
+
+### Initialize the React SDK
 ```js
 import { OpenFeature } from '@openfeature/react-sdk';
 import { OpenFeatureSplitProvider } from '@splitsoftware/openfeature-web-split-provider';
@@ -205,7 +219,8 @@ function App() {
   );
 }
 ```
-### Evaluation hooks
+
+#### Evaluation hooks
 ```js
 import { useFlag } from '@openfeature/react-sdk';
 
