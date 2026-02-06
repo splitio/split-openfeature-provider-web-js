@@ -107,4 +107,3 @@ pipeline:
                     envVariables:
                       NODE_ENV: test
                       CI: "true"
-            rollbackSteps: []
