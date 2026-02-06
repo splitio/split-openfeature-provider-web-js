@@ -38,7 +38,7 @@ pipeline:
                     shell: Bash
                     command: |
                       # Install curl and other dependencies
-                      apk add --no-cache curl bash
+                      apt-get update && apt-get install -y curl bash
 
                       # Install nvm
                       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
