@@ -6,11 +6,12 @@ pipeline:
   properties:
     ci:
       codebase:
-        build:
-          type: PR
-          spec:
-            number: <+input>
         connectorRef: splitio
+        repoName: split-openfeature-provider-web-js
+        build:
+          type: branch
+          spec:
+            branch: <+input>
   stages:
     - stage:
         name: CI Stage
