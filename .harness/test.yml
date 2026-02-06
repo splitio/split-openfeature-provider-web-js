@@ -56,8 +56,6 @@ pipeline:
                   spec:
                     command: npm run test
                     shell: Sh
-                    connectorRef: account.harnessImage
-                    image: ubuntu:24.04
                     reports:
                       type: JUnit
                       spec:
