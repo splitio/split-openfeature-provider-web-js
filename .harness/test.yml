@@ -8,10 +8,7 @@ pipeline:
       codebase:
         connectorRef: splitio
         repoName: split-openfeature-provider-web-js
-        build:
-          type: branch
-          spec:
-            branch: <+input>
+        build: <+input>
   stages:
     - stage:
         name: CI Stage
@@ -23,6 +20,8 @@ pipeline:
             type: Cloud
             spec:
               size: small
+              imageSpec:
+                imageName: ubuntu-latest
           platform:
             os: Linux
             arch: Amd64
@@ -33,46 +32,33 @@ pipeline:
                   name: Setup NodeJS
                   identifier: setup_nodejs
                   spec:
-                    connectorRef: account.harnessImage
-                    image: ubuntu:24.04
-                    shell: Bash
                     uses: dcodeIO/setup-node-nvm@master
                     with:
                       node-version: 20
-                  timeout: 10m
               - step:
                   type: Run
                   name: Install Dependencies
                   identifier: install_dependencies
                   spec:
                     shell: Bash
-                    command: |
-                      # Set up npm cache directory
-                      mkdir -p ~/.npm
-
-                      # Run npm ci with cache enabled
-                      npm ci
+                    command: mkdir -p ~/.npm npm ci
                     envVariables:
                       npm_config_cache: ~/.npm
-                  timeout: 10m
               - step:
                   type: Run
                   name: Run Checks
                   identifier: run_checks
                   spec:
-                    shell: Bash
-                    command: |
-                      npm run check
-                  timeout: 10m
+                    shell: Sh
+                    command: npm run check
               - step:
                   identifier: run_tests
                   name: Run Tests
                   type: Test
-                  timeout: 10m
                   spec:
                     command: |
                       npm run test
-                    shell: Bash
+                    shell: Sh
                     connectorRef: account.harnessImage
                     image: ubuntu:24.04
                     reports:
