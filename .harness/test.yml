@@ -10,7 +10,7 @@ pipeline:
           type: PR
           spec:
             number: <+input>
-        connectorRef: <+input>
+        connectorRef: splitio
   stages:
     - stage:
         name: CI Stage
