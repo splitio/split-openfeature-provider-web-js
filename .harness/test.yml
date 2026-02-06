@@ -1,0 +1,109 @@
+pipeline:
+  name: test
+  identifier: test
+  projectIdentifier: Harness_Split
+  orgIdentifier: PROD
+  properties:
+    ci:
+      codebase:
+        build:
+          type: PR
+          spec:
+            number: <+input>
+        connectorRef: <+input>
+  stages:
+    - stage:
+        name: CI Stage
+        identifier: ci_stage
+        type: CI
+        spec:
+          cloneCodebase: true
+          runtime:
+            type: Cloud
+            spec:
+              size: small
+          platform:
+            os: Linux
+            arch: Amd64
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Setup NodeJS
+                  identifier: setup_nodejs
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: ubuntu:22.04
+                    shell: Bash
+                    command: |
+                      # Install curl and other dependencies
+                      apk add --no-cache curl bash
+
+                      # Install nvm
+                      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+
+                      # Load nvm
+                      export NVM_DIR="$HOME/.nvm"
+                      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+                      # Install latest LTS version of Node.js
+                      nvm install --lts
+
+                      # Use the installed version
+                      nvm use --lts
+
+                      # Export the Node.js version
+                      export NODE_VERSION=$(node -v)
+                      echo "Node.js version: $NODE_VERSION"
+                    outputVariables:
+                      - name: NODE_VERSION
+                  timeout: 10m
+              - step:
+                  type: Run
+                  name: Install Dependencies
+                  identifier: install_dependencies
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: ubuntu:22.04
+                    shell: Bash
+                    command: |
+                      # Set up npm cache directory
+                      mkdir -p ~/.npm
+
+                      # Run npm ci with cache enabled
+                      npm ci
+                    envVariables:
+                      npm_config_cache: ~/.npm
+                  timeout: 10m
+              - step:
+                  type: Run
+                  name: Run Checks
+                  identifier: run_checks
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: ubuntu:22.04
+                    shell: Bash
+                    command: |
+                      npm run check
+                  timeout: 10m
+              - step:
+                  identifier: run_tests
+                  name: Run Tests
+                  type: Test
+                  timeout: 10m
+                  spec:
+                    command: |
+                      npm run test
+                    shell: Bash
+                    connectorRef: account.harnessImage
+                    image: ubuntu:22.04
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - "**/test-results.xml"
+                          - "**/junit-*.xml"
+                    envVariables:
+                      NODE_ENV: test
+                      CI: "true"
+            rollbackSteps: []
