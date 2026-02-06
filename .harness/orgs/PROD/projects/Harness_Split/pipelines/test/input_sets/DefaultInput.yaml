@@ -1,0 +1,14 @@
+inputSet:
+  name: DefaultInput
+  identifier: DefaultInput
+  orgIdentifier: PROD
+  projectIdentifier: Harness_Split
+  pipeline:
+    identifier: test
+    properties:
+      ci:
+        codebase:
+          build:
+            type: PR
+            spec:
+              number: <+trigger.prNumber>
