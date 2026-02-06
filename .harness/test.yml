@@ -41,9 +41,7 @@ pipeline:
                   identifier: install_dependencies
                   spec:
                     shell: Bash
-                    command: mkdir -p ~/.npm npm ci
-                    envVariables:
-                      npm_config_cache: ~/.npm
+                    command: npm ci
               - step:
                   type: Run
                   name: Run Checks
@@ -56,8 +54,7 @@ pipeline:
                   name: Run Tests
                   type: Test
                   spec:
-                    command: |
-                      npm run test
+                    command: npm run test
                     shell: Sh
                     connectorRef: account.harnessImage
                     image: ubuntu:24.04
