@@ -1,5 +1,5 @@
 pipeline:
-  name: test
+  name: FME-openFeature-JS-web
   identifier: test
   projectIdentifier: Harness_Split
   orgIdentifier: PROD
@@ -65,3 +65,4 @@ pipeline:
                     envVariables:
                       NODE_ENV: test
                       CI: "true"
+  tags: {}
