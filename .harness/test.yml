@@ -34,7 +34,7 @@ pipeline:
                   identifier: setup_nodejs
                   spec:
                     connectorRef: account.harnessImage
-                    image: ubuntu:22.04
+                    image: ubuntu:24.04
                     shell: Bash
                     command: |
                       # Install curl and other dependencies
@@ -93,7 +93,7 @@ pipeline:
                       npm run test
                     shell: Bash
                     connectorRef: account.harnessImage
-                    image: ubuntu:22.04
+                    image: ubuntu:24.04
                     reports:
                       type: JUnit
                       spec:
