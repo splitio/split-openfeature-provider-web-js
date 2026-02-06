@@ -28,7 +28,7 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: Run
+                  type: Action
                   name: Setup NodeJS
                   identifier: setup_nodejs
                   spec:
