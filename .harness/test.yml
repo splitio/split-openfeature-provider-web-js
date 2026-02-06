@@ -36,28 +36,12 @@ pipeline:
                     connectorRef: account.harnessImage
                     image: ubuntu:24.04
                     shell: Bash
-                    command: |
-                      # Install curl and other dependencies
-                      apt-get update && apt-get install -y curl bash
-
-                      # Install nvm
-                      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
-
-                      # Load nvm
-                      export NVM_DIR="$HOME/.nvm"
-                      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-                      # Install latest LTS version of Node.js
-                      nvm install --lts
-
-                      # Use the installed version
-                      nvm use --lts
-
-                      # Export the Node.js version
-                      export NODE_VERSION=$(node -v)
-                      echo "Node.js version: $NODE_VERSION"
-                    outputVariables:
-                      - name: NODE_VERSION
+                    command: |-
+                      echo "Installing Node.js version <+matrix.nodeVersion>"
+                      apt-get update
+                      apt-get install -y curl
+                      curl -fsSL https://deb.nodesource.com/setup_<+matrix.nodeVersion>.x | bash -
+                      apt-get install -y nodejs
                   timeout: 10m
               - step:
                   type: Run
