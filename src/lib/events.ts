@@ -76,7 +76,7 @@ export function attachSplitReadyHandlers(
   } else {
     client.on(client.Event.SDK_READY_TIMED_OUT, onSdkTimedOut);
   }
-  client.on(client.Event.SDK_READY, (sdkReadyMetadata: SplitIO.SdkReadyMetadata) => {
+  client.on(client.Event.SDK_READY, (sdkReadyMetadata?: SplitIO.SdkReadyMetadata) => {
     emitReadyWithSplitMetadata(eventsEmitter, providerName, onSdkReady, sdkReadyMetadata);
   });
 }
