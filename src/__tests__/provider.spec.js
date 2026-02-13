@@ -1,5 +1,6 @@
 /* eslint-disable jest/no-conditional-expect */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { ProviderEvents } from '@openfeature/web-sdk';
 import { OpenFeatureSplitProvider } from '../lib/js-split-provider';
 
 describe('OpenFeatureSplitProvider Unit Tests', () => {
@@ -21,8 +22,11 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
         }
         return { id: 'mock-listener' };
       }),
-      // Define SDK_READY event constant
-      Event: { SDK_READY: 'SDK_READY' },
+      // Define event constants used by provider
+      Event: {
+        SDK_READY: 'SDK_READY',
+        SDK_UPDATE: 'SDK_UPDATE',
+      },
       
       // Mock the treatments
       getTreatmentWithConfig: jest.fn((flagKey, _attributes) => {
@@ -159,5 +163,60 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
     expect(trackSpy).toHaveBeenCalledTimes(1);
     expect(trackSpy).toHaveBeenCalledWith('user', 'purchase', 9.99, { plan: 'pro', beta: true });
   });
-  
+
+  describe('SDK_UPDATE / ConfigurationChanged', () => {
+    beforeEach(async () => {
+      await provider.initialize();
+    });
+
+    function getSdkUpdateCallback() {
+      const call = mockSplitClient.on.mock.calls.find((c) => c[0] === 'SDK_UPDATE');
+      return call ? call[1] : null;
+    }
+
+    test('emits ConfigurationChanged with only providerName when updateMetadata is undefined', () => {
+      const emitSpy = jest.spyOn(provider.events, 'emit');
+      const sdkUpdateCallback = getSdkUpdateCallback();
+      expect(sdkUpdateCallback).toBeDefined();
+
+      sdkUpdateCallback(undefined);
+
+      expect(emitSpy).toHaveBeenCalledWith(ProviderEvents.ConfigurationChanged, {
+        providerName: provider.metadata.name,
+      });
+    });
+
+    test('emits ConfigurationChanged with eventMetadata when updateMetadata is provided', () => {
+      const emitSpy = jest.spyOn(provider.events, 'emit');
+      const sdkUpdateCallback = getSdkUpdateCallback();
+      const updateMetadata = { type: 'SPLIT_KILL', names: ['flag-a', 'flag-b'] };
+
+      sdkUpdateCallback(updateMetadata);
+
+      expect(emitSpy).toHaveBeenCalledWith(ProviderEvents.ConfigurationChanged, {
+        providerName: provider.metadata.name,
+        eventMetadata: {
+          type: 'SPLIT_KILL',
+          names: '["flag-a","flag-b"]',
+        },
+      });
+    });
+
+    test('emits ConfigurationChanged with flagsChanged when updateMetadata.type is FLAGS_UPDATE', () => {
+      const emitSpy = jest.spyOn(provider.events, 'emit');
+      const sdkUpdateCallback = getSdkUpdateCallback();
+      const updateMetadata = { type: 'FLAGS_UPDATE', names: ['my-flag', 'other-flag'] };
+
+      sdkUpdateCallback(updateMetadata);
+
+      expect(emitSpy).toHaveBeenCalledWith(ProviderEvents.ConfigurationChanged, {
+        providerName: provider.metadata.name,
+        eventMetadata: {
+          type: 'FLAGS_UPDATE',
+          names: '["my-flag","other-flag"]',
+        },
+        flagsChanged: ['my-flag', 'other-flag'],
+      });
+    });
+  });
 });

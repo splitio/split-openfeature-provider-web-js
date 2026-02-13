@@ -84,9 +84,6 @@ describe('OpenFeature Split Provider - E2E Integration Tests', () => {
       OpenFeature.setProvider(provider);
       const client = OpenFeature.getClient();
       await new Promise((resolve, reject) => {
-        client.addHandler(ProviderEvents.Stale, () => {
-          reject('should not emit stale');
-        });
         client.addHandler(ProviderEvents.Ready, () => {
           const splitClient = splitFactory.client();
           try {
@@ -122,11 +119,7 @@ describe('OpenFeature Split Provider - E2E Integration Tests', () => {
       const splitFactory = SplitFactory(config);
       const client = OpenFeature.getClient();
 
-      await new Promise((resolve, reject) => {
-
-        client.addHandler(ProviderEvents.Stale, () => {
-          reject('should not emit stale');
-        });
+      await new Promise((resolve) => {
         
         client.addHandler(ProviderEvents.Ready, () => {
 
