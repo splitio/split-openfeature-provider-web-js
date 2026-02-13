@@ -186,7 +186,7 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
       });
     });
 
-    test('emits ConfigurationChanged with eventMetadata when updateMetadata is provided', () => {
+    test('emits ConfigurationChanged with metadata when updateMetadata is provided', () => {
       const emitSpy = jest.spyOn(provider.events, 'emit');
       const sdkUpdateCallback = getSdkUpdateCallback();
       const updateMetadata = { type: 'SPLIT_KILL', names: ['flag-a', 'flag-b'] };
@@ -195,9 +195,8 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
 
       expect(emitSpy).toHaveBeenCalledWith(ProviderEvents.ConfigurationChanged, {
         providerName: provider.metadata.name,
-        eventMetadata: {
+        metadata: {
           type: 'SPLIT_KILL',
-          names: '["flag-a","flag-b"]',
         },
       });
     });
@@ -211,9 +210,8 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
 
       expect(emitSpy).toHaveBeenCalledWith(ProviderEvents.ConfigurationChanged, {
         providerName: provider.metadata.name,
-        eventMetadata: {
+        metadata: {
           type: 'FLAGS_UPDATE',
-          names: '["my-flag","other-flag"]',
         },
         flagsChanged: ['my-flag', 'other-flag'],
       });

@@ -132,7 +132,7 @@ describe('events', () => {
 
       expect(emit).toHaveBeenCalledWith(ProviderEvents.ConfigurationChanged, {
         providerName,
-        eventMetadata: { type: 'FLAGS_UPDATE', names: '["flag-a","flag-b"]' },
+        metadata: { type: 'FLAGS_UPDATE' },
         flagsChanged: ['flag-a', 'flag-b'],
       });
     });
@@ -157,7 +157,7 @@ describe('events', () => {
       });
     });
 
-    test('emits eventMetadata without flagsChanged when type is not FLAGS_UPDATE', () => {
+    test('emits metadata without flagsChanged when type is not FLAGS_UPDATE', () => {
       const emit = jest.fn();
       let updateCallback;
       const client = {
@@ -174,7 +174,7 @@ describe('events', () => {
 
       expect(emit).toHaveBeenCalledWith(ProviderEvents.ConfigurationChanged, {
         providerName,
-        eventMetadata: { type: 'SPLIT_KILL', names: '["x"]' },
+        metadata: { type: 'SPLIT_KILL' },
       });
     });
   });

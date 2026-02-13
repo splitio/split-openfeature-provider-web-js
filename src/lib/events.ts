@@ -94,9 +94,8 @@ export function attachSplitUpdateHandler(
     if (updateMetadata) {
       eventDetails = {
         ...eventDetails,
-        eventMetadata: {
+        metadata: {
           type: updateMetadata.type,
-          names: JSON.stringify(updateMetadata.names),
         },
       };
       if (updateMetadata.type === 'FLAGS_UPDATE') {

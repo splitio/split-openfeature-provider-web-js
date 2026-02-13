@@ -31,12 +31,12 @@
     "npm": ">=3"
   },
   "peerDependencies": {
-    "@openfeature/web-sdk": "^1.7.2",
+    "@openfeature/web-sdk": "^1.6.1",
     "@splitsoftware/splitio-browserjs": "^1.7.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
-    "@openfeature/web-sdk": "^1.7.2",
+    "@openfeature/web-sdk": "^1.6.1",
     "@splitsoftware/splitio-browserjs": "^1.7.0",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
