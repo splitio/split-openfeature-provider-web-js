@@ -2,7 +2,7 @@
  * OpenFeature evaluation tests: validate the Split provider through the
  * OpenFeature Web SDK Evaluation API (get*Value, get*Details) and provider lifecycle.
  */
-import { OpenFeature, ProviderEvents, StandardResolutionReasons } from '@openfeature/web-sdk';
+import { OpenFeature, StandardResolutionReasons } from '@openfeature/web-sdk';
 import { OpenFeatureSplitProvider } from '../../lib/js-split-provider';
 
 describe('OpenFeature evaluation – Split provider', () => {

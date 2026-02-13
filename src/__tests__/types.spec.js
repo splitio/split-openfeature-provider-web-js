@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   CONTROL_TREATMENT,
   CONTROL_VALUE_ERROR_MESSAGE,

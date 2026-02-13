@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ProviderEvents } from '@openfeature/web-sdk';
 import {
   attachSplitReadyHandlers,

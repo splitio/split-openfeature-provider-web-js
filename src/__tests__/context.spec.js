@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { transformContext } from '../lib/context';
 
 describe('context', () => {
