@@ -1,4 +1,4 @@
-# Split OpenFeature Provider for NodeJS
+# Split OpenFeature Provider for Web JavaScript
 [![Twitter Follow](https://img.shields.io/twitter/follow/splitsoftware.svg?style=social&label=Follow&maxAge=1529000)](https://twitter.com/intent/follow?screen_name=splitsoftware)
 
 ## Overview
@@ -27,11 +27,17 @@ import { OpenFeatureSplitProvider } from '@splitsoftware/openfeature-web-split-p
 
 const splitFactory = SplitFactory({
   core: {
-    authorizationKey: 'your auth key' 
+    authorizationKey: 'CLIENT_SIDE_SDK_KEY',
+    key: 'TARGETING_KEY'
   }
 });
+
 const provider = new OpenFeatureSplitProvider(splitFactory);
-OpenFeature.setProvider(provider);
+
+// Register provider and wait for the default SDK client for 'TARGETING_KEY' to be ready
+await OpenFeature.setProviderAndWait(provider);
+
+const client = OpenFeature.getClient();
 ```
 
 ## Use of OpenFeature with Split
@@ -43,7 +49,7 @@ const context: EvaluationContext = {
   targetingKey: 'TARGETING_KEY',
   trafficType: 'account'
 };
-OpenFeature.setContext(context)
+await OpenFeature.setContext(context)
 ```
 
 ## Evaluate with details
@@ -62,10 +68,11 @@ Evaluation attributes must be set in context before evaluation
 const context: EvaluationContext = {
   targetingKey: 'TARGETING_KEY',
   trafficType: 'account',
+  // Evaluation attributes:
   plan: 'premium',
-  couppon: 'WELCOME10'
+  coupon: 'WELCOME10'
 };
-OpenFeature.setContext(context);
+await OpenFeature.setContext(context);
 const booleanTreatment = client.getBooleanDetails('boolFlag', false);
 ```
 
@@ -89,11 +96,152 @@ Example:
 const context = { targetingKey: 'user-123', trafficType: 'account' }
 const details = { value: 19.99, properties: { plan: 'pro', coupon: 'WELCOME10' }}
 
-client.setEvaluationContext(context)
+await OpenFeature.setContext(context)
 client.track('checkout.completed', details)
 ```
+
+## Angular Usage
+
+### Install dependencies
+```bash
+npm i @openfeature/angular-sdk @splitsoftware/splitio-browserjs @splitsoftware/openfeature-web-split-provider
+```
+
+### Initialize the Angular SDK
+
+#### Traditional (NgModule) setup
+```js
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { OpenFeatureModule } from '@openfeature/angular-sdk';
+import { SplitFactory } from '@splitsoftware/splitio-browserjs';
+import { OpenFeatureSplitProvider } from '@splitsoftware/openfeature-web-split-provider';
+
+const splitFactory = SplitFactory({
+  core: {
+    authorizationKey: 'CLIENT_SIDE_SDK_KEY',
+    key: 'TARGETING_KEY'
+  }
+});
+const openFeatureProvider = new OpenFeatureSplitProvider(splitFactory);
+
+@NgModule({
+  imports: [
+    RouterModule.forRoot(routes),
+    OpenFeatureModule.forRoot({
+      provider: openFeatureProvider
+    })
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule {}
+```
+
+#### Standalone (Angular 16+) setup
+```js
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, importProvidersFrom } from '@angular/core';
+import { OpenFeatureModule } from '@openfeature/angular-sdk';
+import { SplitFactory } from '@splitsoftware/splitio-browserjs';
+import { OpenFeatureSplitProvider } from '@splitsoftware/openfeature-web-split-provider';
+
+const splitFactory = SplitFactory({
+  core: {
+    authorizationKey: 'CLIENT_SIDE_SDK_KEY',
+    key: 'TARGETING_KEY'
+  }
+});
+const openFeatureProvider = new OpenFeatureSplitProvider(splitFactory);
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    importProvidersFrom(
+      OpenFeatureModule.forRoot({
+        provider: openFeatureProvider
+      })
+    )
+  ]
+};
+```
+
+#### Component injection and usage
+```js
+import { FeatureFlagService, EvaluationDetails } from '@openfeature/angular-sdk';
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
+})
+export class App {
+  constructor(private splitService: FeatureFlagService) {}
+  
+  ngOnInit() {
+    this.splitService.getStringDetails('featureFlagName', 'default').subscribe((result: EvaluationDetails<string>) => {
+      console.log('Feature flag result:', result.value);
+    });
+  }
+}
+```
+> 🔗 For more information on Angular integration, visit the [official OpenFeature Angular SDK documentation][angular-docs].
+
+[angular-docs]: https://openfeature.dev/docs/reference/sdks/client/web/angular
+
+## React usage
+
+### Install dependencies
+```bash
+npm i @openfeature/react-sdk @splitsoftware/splitio-browserjs @splitsoftware/openfeature-web-split-provider
+```
+
+### Initialize the React SDK
+```js
+import { OpenFeature } from '@openfeature/react-sdk';
+import { OpenFeatureSplitProvider } from '@splitsoftware/openfeature-web-split-provider';
+import { DebugLogger, SplitFactory } from '@splitsoftware/splitio-browserjs';
+
+const splitFactory = SplitFactory({
+  core: {
+    authorizationKey: 'CLIENT_SIDE_SDK_KEY',
+    key: 'TARGETING_KEY'
+  }
+})
+const openFeatureProvider = new OpenFeatureSplitProvider(splitFactory);
+
+OpenFeature.setProvider(openFeatureProvider);
+
+function App() {
+  return (
+    <OpenFeatureProvider>
+      <Page></Page>
+    </OpenFeatureProvider>
+  );
+}
+```
+
+#### Evaluation hooks
+```js
+import { useFlag } from '@openfeature/react-sdk';
+
+function Page() {
+  // Use the "query-style" flag evaluation hook, specifying a flag-key and a default value.
+  const { value: showNewMessage } = useFlag('new-message', true);
+  return (
+    <div className="App">
+      <header className="App-header">
+        {showNewMessage ? <p>Welcome to this OpenFeature-enabled React app!</p> : <p>Welcome to this React app.</p>}
+      </header>
+    </div>
+  )
+}
+```
+> 🔗 For more information on React integration, visit the [official OpenFeature React SDK documentation][react-docs].
+
+[react-docs]: https://openfeature.dev/docs/reference/sdks/client/web/react
+
 ## Submitting issues
- 
+
 The Split team monitors all issues submitted to this [issue tracker](https://github.com/splitio/split-openfeature-provider-web-js/issues). We encourage you to use this issue tracker to submit any bug reports, feedback, and feature enhancements. We'll do our best to respond in a timely manner.
 
 ## Contributing
@@ -103,13 +251,13 @@ Please see [Contributors Guide](CONTRIBUTORS-GUIDE.md) to find all you need to s
 Licensed under the Apache License, Version 2.0. See: [Apache License](http://www.apache.org/licenses/).
 
 ## About Split
- 
+
 Split is the leading Feature Delivery Platform for engineering teams that want to confidently deploy features as fast as they can develop them. Split’s fine-grained management, real-time monitoring, and data-driven experimentation ensure that new features will improve the customer experience without breaking or degrading performance. Companies like Twilio, Salesforce, GoDaddy and WePay trust Split to power their feature delivery.
- 
+
 To learn more about Split, contact hello@split.io, or get started with feature flags for free at https://www.split.io/signup.
- 
+
 Split has built and maintains SDKs for:
- 
+
 * .NET [Github](https://github.com/splitio/dotnet-client) [Docs](https://help.split.io/hc/en-us/articles/360020240172--NET-SDK)
 * Android [Github](https://github.com/splitio/android-client) [Docs](https://help.split.io/hc/en-us/articles/360020343291-Android-SDK)
 * Angular [Github](https://github.com/splitio/angular-sdk-plugin) [Docs](https://help.split.io/hc/en-us/articles/6495326064397-Angular-utilities)
@@ -128,10 +276,9 @@ Split has built and maintains SDKs for:
 * React Native [Github](https://github.com/splitio/react-native-client) [Docs](https://help.split.io/hc/en-us/articles/4406066357901-React-Native-SDK)
 * Redux [Github](https://github.com/splitio/redux-client) [Docs](https://help.split.io/hc/en-us/articles/360038851551-Redux-SDK)
 * Ruby [Github](https://github.com/splitio/ruby-client) [Docs](https://help.split.io/hc/en-us/articles/360020673251-Ruby-SDK)
- 
-For a comprehensive list of open source projects visit our [Github page](https://github.com/splitio?utf8=%E2%9C%93&query=%20only%3Apublic%20).
- 
-**Learn more about Split:**
- 
-Visit [split.io/product](https://www.split.io/product) for an overview of Split, or visit our documentation at [help.split.io](http://help.split.io) for more detailed information.
 
+For a comprehensive list of open source projects visit our [Github page](https://github.com/splitio?utf8=%E2%9C%93&query=%20only%3Apublic%20).
+
+**Learn more about Split:**
+
+Visit [split.io/product](https://www.split.io/product) for an overview of Split, or visit our documentation at [help.split.io](http://help.split.io) for more detailed information.
