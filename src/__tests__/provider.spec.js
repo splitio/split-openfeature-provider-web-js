@@ -195,9 +195,8 @@ describe('OpenFeatureSplitProvider Unit Tests', () => {
 
       expect(emitSpy).toHaveBeenCalledWith(ProviderEvents.ConfigurationChanged, {
         providerName: provider.metadata.name,
-        metadata: {
-          type: 'SPLIT_KILL',
-        },
+        flagsChanged: updateMetadata.names,
+        metadata: { type: updateMetadata.type },
       });
     });
 

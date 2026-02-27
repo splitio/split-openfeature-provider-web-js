@@ -97,10 +97,8 @@ export function attachSplitUpdateHandler(
         metadata: {
           type: updateMetadata.type,
         },
+        flagsChanged: updateMetadata.names || []
       };
-      if (updateMetadata.type === 'FLAGS_UPDATE') {
-        eventDetails = { ...eventDetails, flagsChanged: updateMetadata.names };
-      }
     }
     eventsEmitter.emit(ProviderEvents.ConfigurationChanged, eventDetails);
   });

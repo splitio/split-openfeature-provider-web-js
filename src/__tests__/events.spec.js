@@ -175,6 +175,7 @@ describe('events', () => {
       expect(emit).toHaveBeenCalledWith(ProviderEvents.ConfigurationChanged, {
         providerName,
         metadata: { type: 'SPLIT_KILL' },
+        flagsChanged: ['x'],
       });
     });
   });

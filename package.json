@@ -32,7 +32,7 @@
   },
   "peerDependencies": {
     "@openfeature/web-sdk": "^1.6.1",
-    "@splitsoftware/splitio-browserjs": "^1.7.0"
+    "@splitsoftware/splitio-browserjs": "^1.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
