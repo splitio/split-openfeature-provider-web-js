@@ -1,6 +1,6 @@
 {
   "name": "@splitsoftware/openfeature-web-split-provider",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Split OpenFeature Web Provider",
   "files": [
     "README.md",
@@ -37,7 +37,7 @@
   "devDependencies": {
     "@eslint/js": "^9.35.0",
     "@openfeature/web-sdk": "^1.6.1",
-    "@splitsoftware/splitio-browserjs": "^1.4.0",
+    "@splitsoftware/splitio-browserjs": "^1.7.0",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
     "eslint": "^9.35.0",

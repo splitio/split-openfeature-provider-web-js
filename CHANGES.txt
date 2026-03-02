@@ -1,3 +1,8 @@
+1.1.0 (March 2, 2026)
+  - Added ProviderEvents.Ready payload with Split SdkReadyMetadata
+  - Updated ConfigurationChanged to forward SdkUpdateMetadata in metadata 
+  - Requires @splitsoftware/splitio-browserjs ^1.7.0 for SDK_UPDATE metadata support
+
 1.0.0 (October 1, 2025)
-- First release. 
-- Up to date with @openfeature/web-sdk v1.6.1, and @splitsoftware/splitio-browserjs 1.4.0
+  - First release. 
+  - Up to date with @openfeature/web-sdk v1.6.1, and @splitsoftware/splitio-browserjs 1.4.0
