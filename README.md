@@ -52,6 +52,22 @@ const context: EvaluationContext = {
 await OpenFeature.setContext(context)
 ```
 
+## Configuration changed event (SDK_UPDATE)
+
+When the Split SDK emits the `SDK_UPDATE` **event** (flags or segments changed), the provider emits OpenFeature’s `ConfigurationChanged` and forwards the event metadata. The metadata shape matches [javascript-commons SdkUpdateMetadata](https://github.com/splitio/javascript-commons): `type` is `'FLAGS_UPDATE' | 'SEGMENTS_UPDATE'` and `names` is the list of flag or segment names that were updated. Handlers receive [Provider Event Details](https://openfeature.dev/specification/types#provider-event-details): `flagsChanged` (when `type === 'FLAGS_UPDATE'`, the `names` array) and `metadata` (`type` as string).
+
+Requires `@splitsoftware/splitio-browserjs` **1.7.0 or later** (metadata was added in 1.7.0).
+
+```js
+const { OpenFeature, ProviderEvents } = require('@openfeature/web-sdk');
+
+const client = OpenFeature.getClient();
+client.addHandler(ProviderEvents.ConfigurationChanged, (eventDetails) => {
+  console.log('Flags changed:', eventDetails.flagsChanged);
+  console.log('Event metadata:', eventDetails.metadata);
+});
+
+```
 ## Evaluate with details
 Use the get*Details(...) APIs to get the value and rich context (variant, reason, error code, metadata). This provider includes the Split treatment config as a raw JSON string under flagMetadata["config"]
 
